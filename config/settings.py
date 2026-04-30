@@ -261,7 +261,7 @@ SITE_URL = os.getenv('SITE_URL', 'https://nextzendev.in')
 
 # ── Security Headers (auto-enabled in production) ────────────────────
 if not DEBUG:
-    ALLOWED_HOSTS               = os.getenv('ALLOWED_HOSTS', 'nextzendev.in').split(',')
+    ALLOWED_HOSTS               = os.getenv('ALLOWED_HOSTS', "nextzendev.in,www.nextzendev.in,nextzendev.onrender.com").split(',')
     SECURE_SSL_REDIRECT         = True
     SECURE_HSTS_SECONDS         = 31536000   # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
