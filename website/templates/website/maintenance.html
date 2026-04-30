@@ -1,0 +1,198 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ gs.maintenance_title }}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0f0c29;
+      background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: #fff;
+      padding: 2rem;
+      overflow: hidden;
+    }
+
+    /* Animated background orbs */
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.35;
+      animation: float 8s ease-in-out infinite;
+    }
+    body::before {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, #7c3aed, transparent);
+      top: -150px; left: -150px;
+    }
+    body::after {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, #2563eb, transparent);
+      bottom: -100px; right: -100px;
+      animation-delay: -4s;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) scale(1); }
+      50%       { transform: translateY(-30px) scale(1.05); }
+    }
+
+    .card {
+      position: relative;
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 24px;
+      padding: 3rem 3.5rem;
+      max-width: 520px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+      animation: slideUp 0.6s ease both;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .icon-wrap {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
+      margin-bottom: 1.75rem;
+      font-size: 2.5rem;
+      box-shadow: 0 0 40px rgba(124,58,237,0.5);
+      animation: pulse 2.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 40px rgba(124,58,237,0.5); }
+      50%       { box-shadow: 0 0 70px rgba(124,58,237,0.8); }
+    }
+
+    h1 {
+      font-size: clamp(1.6rem, 4vw, 2.1rem);
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+      background: linear-gradient(90deg, #fff 30%, #a78bfa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    p.message {
+      font-size: 1.05rem;
+      line-height: 1.7;
+      color: rgba(255,255,255,0.75);
+      margin-bottom: 1.5rem;
+    }
+
+    .eta-badge {
+      display: inline-block;
+      background: rgba(124,58,237,0.25);
+      border: 1px solid rgba(124,58,237,0.5);
+      color: #c4b5fd;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.45rem 1.2rem;
+      border-radius: 999px;
+      margin-bottom: 1.75rem;
+      letter-spacing: 0.02em;
+    }
+
+    .divider {
+      height: 1px;
+      background: rgba(255,255,255,0.1);
+      margin: 1.5rem 0;
+    }
+
+    .contact-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      color: rgba(255,255,255,0.6);
+      font-size: 0.95rem;
+    }
+    .contact-row a {
+      color: #a78bfa;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+    .contact-row a:hover { color: #c4b5fd; }
+
+    /* Spinning gear indicator */
+    .gear {
+      display: inline-block;
+      font-size: 1.2rem;
+      animation: spin 3s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.45);
+      margin-top: 1.5rem;
+    }
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #f59e0b;
+      animation: blink 1.4s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.2; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+
+    <div class="icon-wrap">🛠️</div>
+
+    <h1>{{ gs.maintenance_title }}</h1>
+
+    <p class="message">{{ gs.maintenance_message }}</p>
+
+    {% if gs.maintenance_eta %}
+      <div class="eta-badge">
+        <span class="gear">⚙️</span>&nbsp; {{ gs.maintenance_eta }}
+      </div>
+    {% endif %}
+
+    {% if gs.maintenance_email %}
+      <div class="divider"></div>
+      <div class="contact-row">
+        <span>Questions?</span>
+        <a href="mailto:{{ gs.maintenance_email }}">{{ gs.maintenance_email }}</a>
+      </div>
+    {% endif %}
+
+    <div class="status-row">
+      <span class="dot"></span>
+      Maintenance in progress — we'll be back shortly
+    </div>
+
+  </div>
+</body>
+</html>

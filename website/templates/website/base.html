@@ -1,0 +1,929 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        {% if site_settings and site_settings.site_name %}{{ site_settings.site_name }}{% else %}NextZenDev{% endif %}
+    </title>
+    <meta name="description" content="{% if site_settings and site_settings.meta_description %}{{ site_settings.meta_description }}{% else %}NextZenDev builds modern websites, apps, and digital solutions to grow your business.{% endif %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <!-- Tailwind CSS — used by payment, coupons, referral, affiliate pages -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      // Disable Tailwind's CSS reset so it doesn't break existing base.css styles
+      tailwind.config = { corePlugins: { preflight: false } }
+    </script>
+    {% block css %}{% endblock %}
+
+    <style>
+    /* ── Chatbox ── */
+    .chatbox {
+        display: none;
+        flex-direction: column;
+        width: 360px;
+        height: 520px;
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 16px 56px rgba(20,28,37,0.18);
+        overflow: hidden;
+        position: fixed;
+        bottom: 96px;
+        right: 24px;
+        z-index: 9999;
+        font-family: 'DM Sans', sans-serif;
+        border: 1px solid rgba(20,28,37,0.08);
+        transform: translateY(12px) scale(0.97);
+        transition: transform 0.25s ease, opacity 0.25s ease;
+        opacity: 0;
+        pointer-events: none;
+    }
+    .chatbox.show {
+        display: flex;
+        transform: translateY(0) scale(1);
+        opacity: 1;
+        pointer-events: all;
+    }
+
+    .chat-header {
+        background: #141c25;
+        color: #fff;
+        padding: 14px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-weight: 600;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+    .chat-header-left { display:flex; align-items:center; gap:10px; }
+    .chat-avatar {
+        width: 34px; height: 34px; border-radius: 50%;
+        background: linear-gradient(135deg,#1ab87a,#0f7a52);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 16px; flex-shrink: 0;
+    }
+    .chat-header-info { display:flex; flex-direction:column; }
+    .chat-header-name { font-size: 13px; font-weight:600; line-height:1.2; }
+    .chat-header-status { font-size: 11px; color: rgba(255,255,255,0.55); font-weight:400; }
+
+    .chat-header button {
+        background: none; border: none;
+        color: rgba(255,255,255,0.6);
+        font-size: 16px; cursor: pointer;
+        width: 28px; height: 28px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        transition: background 0.2s;
+    }
+    .chat-header button:hover { background: rgba(255,255,255,0.1); }
+
+    /* LIVE badge — only shown when admin actually replied in THIS session */
+    .live-badge {
+        display: none;
+        background: #1ab87a;
+        color: #fff;
+        font-size: 9px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 20px;
+        animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+    /* New session banner */
+    .chat-new-session-bar {
+        display:none;
+        background:#f0f9ff;
+        border-bottom: 1px solid #bee3f8;
+        padding: 8px 14px;
+        font-size: 11px;
+        color: #2c5282;
+        text-align: center;
+        flex-shrink: 0;
+    }
+    .chat-new-session-bar a {
+        color:#2b6cb0; cursor:pointer; text-decoration:underline; margin-left:6px;
+    }
+
+    .chat-messages {
+        flex: 1; overflow-y: auto;
+        padding: 14px 12px;
+        display: flex; flex-direction: column; gap: 8px;
+        background: #f7f6f3;
+    }
+    .chat-messages::-webkit-scrollbar { width: 4px; }
+    .chat-messages::-webkit-scrollbar-track { background: transparent; }
+    .chat-messages::-webkit-scrollbar-thumb { background: rgba(20,28,37,0.12); border-radius: 4px; }
+
+    .chat-messages p {
+        margin: 0; padding: 10px 14px;
+        border-radius: 16px; font-size: 13.5px;
+        line-height: 1.55; max-width: 82%;
+        word-break: break-word; white-space: pre-wrap;
+    }
+    .chat-messages p.user {
+        align-self: flex-end;
+        background: #141c25; color: #fff;
+        border-bottom-right-radius: 4px;
+    }
+    .chat-messages p.bot {
+        align-self: flex-start;
+        background: #fff; color: #141c25;
+        border: 1px solid rgba(20,28,37,0.08);
+        border-bottom-left-radius: 4px;
+        box-shadow: 0 2px 8px rgba(20,28,37,0.06);
+    }
+    .chat-messages p.admin {
+        align-self: flex-start;
+        background: #e8f9f2; color: #0e6647;
+        border-bottom-left-radius: 4px;
+        font-weight: 500;
+    }
+    .chat-messages p.system {
+        align-self: center;
+        background: #fef9e7; color: #856404;
+        font-size: 11px; font-style: italic;
+        border-radius: 20px; padding: 5px 14px;
+        max-width: 90%; text-align: center;
+    }
+
+    /* Typing indicator */
+    .typing-indicator {
+        display: none;
+        align-self: flex-start;
+        background: #fff;
+        border: 1px solid rgba(20,28,37,0.08);
+        border-radius: 16px;
+        border-bottom-left-radius: 4px;
+        padding: 10px 16px;
+        box-shadow: 0 2px 8px rgba(20,28,37,0.06);
+    }
+    .typing-indicator.show { display: flex; gap: 4px; align-items: center; }
+    .typing-dot {
+        width:6px; height:6px; border-radius:50%;
+        background: #141c25; opacity:0.4;
+        animation: typingDot 1.2s infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingDot { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px);opacity:0.9} }
+
+    /* AI badge on typing */
+    .ai-thinking-label {
+        font-size: 10px; color: #888; margin-left: 6px; font-style:italic;
+    }
+
+    .chat-input-box {
+        display: flex; border-top: 1px solid rgba(20,28,37,0.08);
+        flex-shrink: 0; background: #fff;
+        padding: 4px;
+        gap: 4px;
+    }
+    .chat-input-box input {
+        flex: 1; padding: 10px 14px;
+        border: none; outline: none;
+        font-size: 13.5px; background: transparent;
+        font-family: 'DM Sans', sans-serif;
+        color: #141c25;
+    }
+    .chat-input-box input:disabled { opacity: 0.5; }
+    .chat-input-box button {
+        padding: 10px 16px;
+        background: #1ab87a; color: #fff;
+        border: none; cursor: pointer;
+        font-size: 16px; transition: 0.2s;
+        border-radius: 10px;
+    }
+    .chat-input-box button:hover { background: #149060; }
+    .chat-input-box button:disabled { background: #ccc; cursor: not-allowed; }
+
+    /* AI Recommendation banner (shown when done state + AI suggestion) */
+    .ai-rec-banner {
+        display:none;
+        background: linear-gradient(135deg,#141c25,#1a2d3a);
+        color:#fff; padding: 10px 14px;
+        font-size: 12px; flex-shrink:0;
+        border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    .ai-rec-banner strong { color: #1ab87a; }
+
+    </style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+    <a href="/" class="logo-container">
+        {% if site_settings and site_settings.logo %}
+            <img src="{{ site_settings.logo.url }}" class="logo-img" alt="Logo">
+        {% else %}
+            <div class="logo-img-fallback">⚡</div>
+        {% endif %}
+        <div class="logo-text-wrap">
+            <span class="logo-text">{{ site_settings.site_name|default:"NextZenDev" }}</span>
+            <span class="logo-tagline">IT Solutions</span>
+        </div>
+    </a>
+
+    <div class="nav-links" id="nav-links">
+        <a href="/" {% if request.path == '/' %}class="active"{% endif %}>Home</a>
+
+        <!-- Services Mega Dropdown -->
+        <div class="nav-dropdown-wrap" id="services-dropdown-wrap">
+            <a href="/services" class="nav-dropdown-trigger {% if '/services' in request.path %}active{% endif %}"
+               onclick="toggleServicesDropdown(event)">
+                Services
+                <svg class="dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="6 9 12 15 18 9"/>
+                </svg>
+            </a>
+            <div class="nav-mega-dropdown" id="services-mega">
+                <div class="dropdown-grid">
+                    <!-- Column 1: Product Engineering -->
+                    <div>
+                        <div class="dropdown-col-head">Product Engineering</div>
+                        {% if nav_services %}
+                            {% for svc in nav_services %}
+                                {% if svc.category == 'product' and svc.is_active %}
+                                    <a href="{{ svc.url|default:'/services' }}" class="dropdown-item">{{ svc.name }}</a>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <a href="/services" class="dropdown-item">Web Application</a>
+                            <a href="/services" class="dropdown-item">Mobile Apps</a>
+                            <a href="/services" class="dropdown-item">Full Stack Development</a>
+                            <a href="/services" class="dropdown-item">CRM Software</a>
+                            <a href="/services" class="dropdown-item">ERP Solutions</a>
+                        {% endif %}
+                    </div>
+                    <!-- Column 2: Cloud & AI -->
+                    <div>
+                        <div class="dropdown-col-head">Cloud &amp; AI</div>
+                        {% if nav_services %}
+                            {% for svc in nav_services %}
+                                {% if svc.category == 'cloud' and svc.is_active %}
+                                    <a href="{{ svc.url|default:'/services' }}" class="dropdown-item">{{ svc.name }}</a>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <a href="/services" class="dropdown-item">Cloud &amp; DevOps</a>
+                            <a href="/services" class="dropdown-item">AI &amp; ML Engineering</a>
+                            <a href="/services" class="dropdown-item">Data Engineering</a>
+                            <a href="/services" class="dropdown-item">API &amp; Integrations</a>
+                        {% endif %}
+                    </div>
+                    <!-- Column 3: Digital Growth -->
+                    <div>
+                        <div class="dropdown-col-head">Digital Growth</div>
+                        {% if nav_services %}
+                            {% for svc in nav_services %}
+                                {% if svc.category == 'digital' and svc.is_active %}
+                                    <a href="{{ svc.url|default:'/services' }}" class="dropdown-item">{{ svc.name }}</a>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <a href="/services" class="dropdown-item">SEO Services</a>
+                            <a href="/services" class="dropdown-item">Social Media Marketing</a>
+                            <a href="/services" class="dropdown-item">Paid Advertising</a>
+                            <a href="/services" class="dropdown-item">Brand Management</a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="dropdown-footer">
+                    <span class="dropdown-footer-text">🚀 Need something custom? Let's talk.</span>
+                    <a href="/contact" class="dropdown-footer-cta">Get a free quote →</a>
+                </div>
+            </div>
+        </div>
+
+        <a href="/portfolio" {% if '/portfolio' in request.path %}class="active"{% endif %}>Work</a>
+        <a href="/about" {% if '/about' in request.path %}class="active"{% endif %}>About</a>
+        <a href="/payment/" {% if '/payment' in request.path %}class="active"{% endif %}>Pay Now</a>
+        <a href="/contact" class="nav-cta">
+            Book a Call
+            <span class="cta-arrow">→</span>
+        </a>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px;">
+        <div class="nav-status">
+            <span class="nav-status-dot"></span>
+            Available for projects
+        </div>
+        <button class="nav-burger" id="nav-burger" aria-label="Toggle menu" onclick="toggleMobileNav()">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+</nav>
+
+{% block content %}{% endblock %}
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-inner">
+
+    <!-- CTA Banner -->
+    <div class="footer-cta-banner">
+      <div class="footer-cta-inner">
+        <div>
+          <div class="footer-cta-label">Let's Build Together</div>
+          <h2>Ready to engineer something <em>remarkable?</em></h2>
+        </div>
+        <div class="footer-cta-actions">
+          <a href="/contact" class="footer-cta-btn">
+            Start a Project
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+          <span class="footer-cta-sub">Free consultation · No commitment</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="footer-main">
+
+      <!-- Brand Column -->
+      <div class="footer-brand">
+        <a href="/" class="footer-logo">
+          {% if site_settings and site_settings.logo %}
+            <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name|default:'NextZenDev' }}" class="footer-logo-img">
+          {% else %}
+            <div class="footer-logo-fallback">⚡</div>
+          {% endif %}
+          <div class="footer-logo-text">
+            <span>{{ site_settings.site_name|default:"NextZenDev" }}</span>
+            <span class="footer-logo-tagline">IT Solutions</span>
+          </div>
+        </a>
+
+        {% if site_settings and site_settings.meta_description %}
+          <p class="footer-brand-desc">{{ site_settings.meta_description }}</p>
+        {% endif %}
+
+        <!-- Social Icons Row — only shows icons configured in admin panel -->
+        <div class="footer-socials-row">
+          {% for social in social_links %}
+            {% if social.is_active and social.url %}
+              <a href="{{ social.url }}" target="_blank" rel="noopener noreferrer" class="footer-social-icon {{ social.platform }}" aria-label="{{ social.get_platform_display }}">
+                {% if social.platform == 'linkedin' %}
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.94 24H3.37V9.65h3.57V24Zm-1.78-16a1.9 1.9 0 110-3.8 1.9 1.9 0 010 3.8Zm4.84 16H6.43V9.65h3.57v2.05h.05c.5-.95 1.72-1.95 3.55-1.95 3.8 0 4.5 2.5 4.5 5.75V24h-3.57v-7.4c0-1.77-.03-4.05-2.47-4.05-2.47 0-2.84 1.92-2.84 3.9V24Z"/></svg>
+                {% elif social.platform == 'instagram' %}
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+                {% elif social.platform == 'twitter' %}
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.26 5.632 5.905-5.632zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                {% elif social.platform == 'youtube' %}
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 7.5c-.3-1.2-1.2-2.1-2.4-2.4C18.6 4.5 12 4.5 12 4.5s-6.6 0-9.1.6C1.6 5.4.7 6.3.4 7.5.1 8.7 0 10.3 0 12s.1 3.3.4 4.5c.3 1.2 1.2 2.1 2.4 2.4 2.5.6 9.1.6 9.1.6s6.6 0 9.1-.6c1.2-.3 2.1-1.2 2.4-2.4.3-1.2.4-2.8.4-4.5s-.1-3.3-.4-4.5zM9.8 15.6V8.4l6.4 3.6-6.4 3.6z"/></svg>
+                {% elif social.platform == 'facebook' %}
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.99 3.66 9.12 8.44 9.88V15H8.89V12h1.55V9.72c0-1.53.9-2.38 2.28-2.38.66 0 1.35.12 1.35.12v1.48h-.76c-.75 0-.98.46-.98.93V12h1.67l-.27 2.9h-1.4v6.98C18.34 21.12 22 16.99 22 12Z"/></svg>
+                {% elif social.platform == 'whatsapp' %}
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                {% endif %}
+              </a>
+            {% endif %}
+          {% endfor %}
+        </div>
+
+        <div class="footer-tech-badges">
+          <span class="footer-tech-badge">React</span>
+          <span class="footer-tech-badge">Django</span>
+          <span class="footer-tech-badge">AWS</span>
+          <span class="footer-tech-badge">Flutter</span>
+          <span class="footer-tech-badge">AI / ML</span>
+        </div>
+      </div>
+
+      <!-- Services Column -->
+      <div class="footer-column">
+        <h3>Services</h3>
+        <div class="footer-links">
+          {% if nav_services %}
+            {% for svc in nav_services %}
+              {% if svc.is_active %}
+                <a href="{{ svc.url|default:'/services' }}">{{ svc.name }}</a>
+              {% endif %}
+            {% endfor %}
+          {% else %}
+            <a href="/services">Web Platforms</a>
+            <a href="/services">Mobile Apps</a>
+            <a href="/services">Cloud &amp; DevOps</a>
+            <a href="/services">AI &amp; Data</a>
+            <a href="/services">SEO &amp; Growth</a>
+            <a href="/services">CRM / ERP</a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Company Column -->
+      <div class="footer-column">
+        <h3>Company</h3>
+        <div class="footer-links">
+          <a href="/about">About Us</a>
+          <a href="/portfolio">Case Studies</a>
+          <a href="/referral/">Referral Program</a>
+          <a href="/affiliate/">Affiliate</a>
+          <a href="/coupons/">Active Coupons</a>
+          <a href="/payment/">Pay Invoice</a>
+        </div>
+      </div>
+
+      <!-- Contact Column -->
+      <div class="footer-column">
+        <h3>Contact</h3>
+        {% if site_settings and site_settings.email %}
+          <a href="mailto:{{ site_settings.email }}" class="footer-contact-item">
+            <div class="footer-contact-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>
+            </div>
+            <div class="footer-contact-text">
+              <span class="footer-contact-label">Email</span>
+              <span class="footer-contact-val">{{ site_settings.email }}</span>
+            </div>
+          </a>
+        {% endif %}
+        {% if site_settings and site_settings.phone %}
+          <a href="tel:{{ site_settings.phone }}" class="footer-contact-item">
+            <div class="footer-contact-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10a19.79 19.79 0 01-3.07-8.67A2 2 0 012 1.18h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+            </div>
+            <div class="footer-contact-text">
+              <span class="footer-contact-label">Phone</span>
+              <span class="footer-contact-val">{{ site_settings.phone }}</span>
+            </div>
+          </a>
+        {% endif %}
+        {% if site_settings and site_settings.address %}
+          <a href="/contact" class="footer-contact-item">
+            <div class="footer-contact-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            </div>
+            <div class="footer-contact-text">
+              <span class="footer-contact-label">Office</span>
+              <span class="footer-contact-val">{{ site_settings.address }}</span>
+            </div>
+          </a>
+        {% endif %}
+        {% if site_settings and site_settings.whatsapp %}
+          <a href="https://wa.me/{{ site_settings.whatsapp }}?text=Hi%20{{ site_settings.site_name|urlencode }}" target="_blank" rel="noopener" class="footer-contact-item">
+            <div class="footer-contact-icon">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            </div>
+            <div class="footer-contact-text">
+              <span class="footer-contact-label">WhatsApp</span>
+              <span class="footer-contact-val">Chat with us</span>
+            </div>
+          </a>
+        {% endif %}
+      </div>
+
+    </div><!-- /footer-main -->
+
+    <!-- Bottom Bar -->
+    <div class="footer-bottom">
+      <p class="footer-bottom-copy">© 2026 {{ site_settings.site_name|default:"NextZenDev" }}. All rights reserved.</p>
+      <div class="footer-legal-mini">
+        <a href="/terms/">Terms</a>
+        <span>·</span>
+        <a href="/privacy/">Privacy</a>
+        <span>·</span>
+        <a href="/refund/">Refund</a>
+      </div>
+      <p class="footer-made-with">Crafted with <span class="heart">♥</span> in India <span class="flag">🇮🇳</span></p>
+    </div>
+
+  </div>
+</footer>
+
+<!-- FLOATING CHAT + WHATSAPP -->
+<div class="floating-stack">
+
+    <div class="chatbox" id="chatbox">
+        <div class="chat-header">
+            <div class="chat-header-left">
+                <div class="chat-avatar">🤖</div>
+                <div class="chat-header-info">
+                    <span class="chat-header-name">
+                        NextZenDev Support
+                        <span class="live-badge" id="live-badge">● LIVE</span>
+                    </span>
+                    <span class="chat-header-status" id="chat-status">AI Assistant · Online</span>
+                </div>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;">
+                <button id="end-chat-btn" onclick="endConversation()" title="End conversation"
+                    style="background:rgba(239,68,68,0.15);color:#f87171;font-size:11px;padding:4px 10px;border-radius:6px;font-weight:600;display:none;">
+                    ✕ End Chat
+                </button>
+                <button onclick="toggleChat()" title="Close">✕</button>
+            </div>
+        </div>
+
+        <!-- Previous session notice bar -->
+        <div class="chat-new-session-bar" id="prev-session-bar">
+            Previous conversation restored.
+            <a onclick="startNewSession()">Start fresh?</a>
+        </div>
+
+        <div id="chat-messages" class="chat-messages"></div>
+
+        <!-- Typing indicator -->
+        <div class="typing-indicator" id="typing-indicator">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <span class="ai-thinking-label">AI thinking…</span>
+        </div>
+
+        <!-- AI Recommendation banner -->
+        <div class="ai-rec-banner" id="ai-rec-banner"></div>
+
+        <!-- Conversation ended banner -->
+        <div id="chat-ended-banner" style="display:none;background:#1a1a2e;border-top:1px solid #ef4444;padding:10px 14px;text-align:center;">
+            <p style="color:#f87171;font-size:12px;font-weight:600;margin:0 0 8px;">🔴 This conversation has ended</p>
+            <button onclick="startNewSession()"
+                style="background:#1ab87a;color:#fff;border:none;padding:6px 18px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">
+                + Start New Chat
+            </button>
+        </div>
+
+        <div class="chat-input-box">
+            <input type="text" id="chat-input" placeholder="Type a message…" autocomplete="off" maxlength="500">
+            <button id="chat-send-btn" onclick="sendMessage()">➤</button>
+        </div>
+    </div>
+
+    <div class="chat-toggle floating-btn" onclick="toggleChat()" title="Chat with us">🤖</div>
+
+    {% if site_settings and site_settings.whatsapp %}
+    <a href="https://wa.me/{{ site_settings.whatsapp }}?text=Hi%20{{ site_settings.site_name|urlencode }}"
+       target="_blank" class="whatsapp-toggle floating-btn" title="WhatsApp">💬</a>
+    {% endif %}
+
+</div>
+
+<!-- NAVBAR SCROLL SCRIPT -->
+<script>
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+    navbar.classList.toggle('scrolled', window.scrollY > 20);
+});
+function toggleMobileNav() {
+    document.getElementById('nav-links').classList.toggle('nav-open');
+    document.getElementById('nav-burger').classList.toggle('active');
+}
+
+// Services dropdown
+function toggleServicesDropdown(e) {
+    const wrap = document.getElementById('services-dropdown-wrap');
+    if (window.innerWidth < 900) {
+        // On mobile, just navigate
+        return;
+    }
+    e.preventDefault();
+    wrap.classList.toggle('open');
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', function(e) {
+    const wrap = document.getElementById('services-dropdown-wrap');
+    if (wrap && !wrap.contains(e.target)) {
+        wrap.classList.remove('open');
+    }
+});
+
+// Hover behaviour for desktop
+document.addEventListener('DOMContentLoaded', function() {
+    const wrap = document.getElementById('services-dropdown-wrap');
+    if (!wrap) return;
+    let closeTimer;
+    wrap.addEventListener('mouseenter', () => {
+        clearTimeout(closeTimer);
+        wrap.classList.add('open');
+    });
+    wrap.addEventListener('mouseleave', () => {
+        closeTimer = setTimeout(() => wrap.classList.remove('open'), 120);
+    });
+});
+</script>
+
+<!-- ═══════════════════════════════════════════════════════
+     CHATBOT SCRIPT — FIXED + AI POWERED
+     ═══════════════════════════════════════════════════════
+     FIXES:
+     1. Session stored in sessionStorage → clears when tab/browser closes
+     2. "Start fresh" button lets user clear manually within same tab
+     3. LIVE badge only shows if admin replied in THIS browser session
+        (tracked via sessionStorage flag, not just DB value)
+     4. Typing indicator shown while waiting for bot reply
+     ═══════════════════════════════════════════════════════ -->
+<script>
+// ── Session storage keys ──────────────────────────────────────────────
+const SESSION_KEY      = "nzd_chat_sid";      // chat session UUID
+const ADMIN_ACTIVE_KEY = "nzd_admin_active";  // did admin reply this tab?
+
+// ── State ─────────────────────────────────────────────────────────────
+let session_id   = sessionStorage.getItem(SESSION_KEY) || null;
+let lastCount    = 0;
+let pollInterval = null;
+let isSending    = false;
+let adminActive  = sessionStorage.getItem(ADMIN_ACTIVE_KEY) === "1";
+let chatOpen     = false;
+let isEnded      = false;
+
+// ── Helpers ───────────────────────────────────────────────────────────
+function getCookie(name) {
+    let v = null;
+    if (document.cookie) {
+        document.cookie.split(';').forEach(c => {
+            const p = c.trim();
+            if (p.startsWith(name + '='))
+                v = decodeURIComponent(p.substring(name.length + 1));
+        });
+    }
+    return v;
+}
+
+function showTyping(show) {
+    document.getElementById('typing-indicator').classList.toggle('show', show);
+    const msgBox = document.getElementById('chat-messages');
+    if (show) msgBox.scrollTop = msgBox.scrollHeight;
+}
+
+function setInputEnabled(enabled) {
+    const inp = document.getElementById('chat-input');
+    const btn = document.getElementById('chat-send-btn');
+    inp.disabled = !enabled;
+    btn.disabled = !enabled;
+}
+
+function markAdminActive() {
+    if (!adminActive) {
+        adminActive = true;
+        sessionStorage.setItem(ADMIN_ACTIVE_KEY, "1");
+        document.getElementById('live-badge').style.display = 'inline-block';
+        document.getElementById('chat-status').textContent = 'Live Agent · Connected';
+        document.querySelector('.chat-avatar').textContent = '👤';
+    }
+    // Show End Chat button once a real conversation is going
+    document.getElementById('end-chat-btn').style.display = 'inline-block';
+}
+
+function markEnded() {
+    isEnded = true;
+    setInputEnabled(false);
+    document.getElementById('end-chat-btn').style.display = 'none';
+    document.getElementById('chat-ended-banner').style.display = 'block';
+    document.getElementById('chat-input').placeholder = 'Conversation ended';
+    document.getElementById('chat-status').textContent = 'Conversation Ended';
+    // Stop polling — no need to keep checking
+    if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+}
+
+// ── Render messages ───────────────────────────────────────────────────
+function renderMessages(messages, isAdminActive, ended) {
+    const box = document.getElementById("chat-messages");
+    box.innerHTML = "";
+    messages.forEach(m => appendBubble(m.sender, m.message, false));
+    box.scrollTop = box.scrollHeight;
+    if (isAdminActive) markAdminActive();
+    if (ended) markEnded();
+}
+
+function appendBubble(sender, text, animate = true) {
+    const box = document.getElementById("chat-messages");
+    const p   = document.createElement("p");
+    p.className   = sender;
+    p.textContent = text;
+    if (animate) {
+        p.style.opacity = "0";
+        p.style.transform = "translateY(6px)";
+        p.style.transition = "opacity 0.2s ease, transform 0.2s ease";
+        box.appendChild(p);
+        requestAnimationFrame(() => {
+            p.style.opacity = "1";
+            p.style.transform = "translateY(0)";
+        });
+    } else {
+        box.appendChild(p);
+    }
+    box.scrollTop = box.scrollHeight;
+}
+
+// ── AI Recommendation: parse project info after "done" state ──────────
+function maybeShowAIRec(data) {
+    if (data.flow_state !== "done") return;
+    const banner = document.getElementById('ai-rec-banner');
+    if (banner.style.display === 'block') return;
+    banner.innerHTML = `🤖 <strong>AI Tip:</strong> Based on your project, consider adding <strong>SEO + Analytics</strong> for 3× more leads. Ask our team!`;
+    banner.style.display = 'block';
+    // Show End Chat button once conversation is in "done" state
+    document.getElementById('end-chat-btn').style.display = 'inline-block';
+}
+
+// ── End conversation (user side) ──────────────────────────────────────
+function endConversation() {
+    if (!session_id || isEnded) return;
+    if (!confirm('Are you sure you want to end this conversation?')) return;
+
+    fetch('/chatbot/end/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: `session_id=${encodeURIComponent(session_id)}&ended_by=user`
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'ended' || data.status === 'already_ended') {
+            appendBubble('system', '🔴 You have ended this conversation. Thank you! Feel free to start a new chat anytime.');
+            markEnded();
+        }
+    })
+    .catch(() => {});
+}
+
+// ── Polling ───────────────────────────────────────────────────────────
+function pollMessages() {
+    if (!session_id || isEnded) return;
+    fetch(`/chatbot/fetch/?session_id=${session_id}`)
+    .then(r => r.json())
+    .then(data => {
+        // Handle conversation ended by admin
+        if (data.is_ended && !isEnded) {
+            if (data.messages.length !== lastCount) {
+                lastCount = data.messages.length;
+                renderMessages(data.messages, data.admin_active, true);
+            } else {
+                markEnded();
+            }
+            return;
+        }
+        if (data.messages.length === lastCount) return;
+        lastCount = data.messages.length;
+        renderMessages(data.messages, data.admin_active, data.is_ended);
+        if (data.admin_active) sessionStorage.setItem(ADMIN_ACTIVE_KEY, "1");
+    })
+    .catch(() => {});
+}
+
+// ── Start / restore chat ──────────────────────────────────────────────
+function startChat() {
+    if (session_id) {
+        fetch(`/chatbot/fetch/?session_id=${session_id}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.messages.length > 0) {
+                lastCount = data.messages.length;
+                renderMessages(data.messages, data.admin_active, data.is_ended);
+                document.getElementById('prev-session-bar').style.display = 'block';
+            } else {
+                triggerGreeting();
+            }
+        });
+    } else {
+        triggerGreeting();
+    }
+}
+
+function triggerGreeting() {
+    showTyping(true);
+    setInputEnabled(false);
+    fetch("/chatbot/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRFToken": getCookie("csrftoken")
+        },
+        body: `message=&session_id=`
+    })
+    .then(r => r.json())
+    .then(data => {
+        showTyping(false);
+        setInputEnabled(true);
+        session_id = data.session_id;
+        sessionStorage.setItem(SESSION_KEY, session_id);
+        fetch(`/chatbot/fetch/?session_id=${session_id}`)
+        .then(r => r.json())
+        .then(d => {
+            lastCount = d.messages.length;
+            renderMessages(d.messages, d.admin_active, d.is_ended);
+        });
+    })
+    .catch(() => { showTyping(false); setInputEnabled(true); });
+}
+
+// Start a completely new session (user clicked "Start fresh?")
+function startNewSession() {
+    sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(ADMIN_ACTIVE_KEY);
+    session_id  = null;
+    adminActive = false;
+    isEnded     = false;
+    lastCount   = 0;
+    document.getElementById('chat-messages').innerHTML = "";
+    document.getElementById('prev-session-bar').style.display = 'none';
+    document.getElementById('live-badge').style.display = 'none';
+    document.getElementById('chat-status').textContent = 'AI Assistant · Online';
+    document.getElementById('ai-rec-banner').style.display = 'none';
+    document.getElementById('chat-ended-banner').style.display = 'none';
+    document.getElementById('end-chat-btn').style.display = 'none';
+    document.getElementById('chat-input').placeholder = 'Type a message…';
+    document.querySelector('.chat-avatar').textContent = '🤖';
+    // Restart polling
+    if (!pollInterval) pollInterval = setInterval(pollMessages, 3000);
+    triggerGreeting();
+}
+
+// ── Toggle open/close ─────────────────────────────────────────────────
+function toggleChat() {
+    const box = document.getElementById("chatbox");
+    chatOpen  = box.classList.toggle("show");
+    if (chatOpen) {
+        startChat();
+        if (!isEnded && !pollInterval) pollInterval = setInterval(pollMessages, 3000);
+        setTimeout(() => document.getElementById('chat-input').focus(), 300);
+    } else {
+        clearInterval(pollInterval);
+        pollInterval = null;
+    }
+}
+
+// ── Send message ──────────────────────────────────────────────────────
+function sendMessage() {
+    if (isSending || isEnded) return;
+    const input = document.getElementById("chat-input");
+    const msg   = input.value.trim().slice(0, 500);  // enforce max length client-side too
+    if (!msg) return;
+
+    isSending   = true;
+    input.value = "";
+    appendBubble("user", msg);
+    lastCount++;
+    showTyping(true);
+    setInputEnabled(false);
+
+    fetch("/chatbot/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRFToken": getCookie("csrftoken")
+        },
+        body: `message=${encodeURIComponent(msg)}&session_id=${session_id || ""}`
+    })
+    .then(r => r.json())
+    .then(data => {
+        showTyping(false);
+        isSending  = false;
+        session_id = data.session_id;
+        sessionStorage.setItem(SESSION_KEY, session_id);
+
+        if (data.is_ended) {
+            markEnded();
+            return;
+        }
+
+        setInputEnabled(true);
+
+        if (data.admin_active) {
+            sessionStorage.setItem(ADMIN_ACTIVE_KEY, "1");
+            markAdminActive();
+        } else if (data.reply) {
+            appendBubble("bot", data.reply);
+            lastCount++;
+        }
+
+        maybeShowAIRec(data);
+        input.focus();
+    })
+    .catch(() => {
+        showTyping(false);
+        setInputEnabled(true);
+        isSending = false;
+    });
+}
+
+// ── Enter key ─────────────────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", function () {
+    const input = document.getElementById("chat-input");
+    if (input) {
+        input.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") { e.preventDefault(); sendMessage(); }
+        });
+    }
+    if (adminActive) {
+        document.getElementById('live-badge').style.display = 'inline-block';
+        document.getElementById('chat-status').textContent = 'Live Agent · Connected';
+    }
+});
+</script>
+
+{% block js %}{% endblock %}
+</body>
+</html>

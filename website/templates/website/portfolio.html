@@ -1,0 +1,86 @@
+{% extends 'website/base.html' %}
+{% load static %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/portfolio.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<section class="portfolio-page page-section">
+    <div class="container">
+
+        <div class="portfolio-header">
+            <div class="portfolio-header-top">
+                <span class="eyebrow">Our Work</span>
+                <h1>Our Portfolio</h1>
+                <p>Projects that showcase our design quality, performance, and real business impact.</p>
+                <div class="portfolio-header-action">
+                    <a href="#portfolio-grid" class="btn-outline">View case studies</a>
+                </div>
+            </div>
+
+            <div class="portfolio-info">
+                <span class="portfolio-pill">Featured case studies</span>
+                <p>Each project is curated from real work delivered through our admin-backed portfolio system.</p>
+            </div>
+        </div>
+
+        <div id="portfolio-grid" class="portfolio-grid">
+            {% if portfolio %}
+                {% for p in portfolio %}
+                <article class="portfolio-card">
+                    <img src="{{ p.image.url }}" alt="{{ p.title }}">
+                    <div class="overlay">
+                        <div class="overlay-content">
+                            <span class="overlay-icon">👁️</span>
+                            <h3>{{ p.title }}</h3>
+                            <p>{{ p.description }}</p>
+                        </div>
+                    </div>
+                </article>
+                {% endfor %}
+            {% else %}
+            <article class="portfolio-card">
+                <img src="https://images.unsplash.com/photo-1460925895917-adf4e565db8d?w=700&q=80" alt="Business Website">
+                <div class="overlay">
+                    <div class="overlay-content">
+                        <span class="overlay-icon">👁️</span>
+                        <h3>Business Website</h3>
+                        <p>Modern business website with CMS</p>
+                    </div>
+                </div>
+            </article>
+            <article class="portfolio-card">
+                <img src="https://images.unsplash.com/photo-1556740738-b6a63e27c4df?w=700&q=80" alt="E-commerce">
+                <div class="overlay">
+                    <div class="overlay-content">
+                        <span class="overlay-icon">👁️</span>
+                        <h3>E-commerce Store</h3>
+                        <p>Full store with payments</p>
+                    </div>
+                </div>
+            </article>
+            <article class="portfolio-card">
+                <img src="https://images.unsplash.com/photo-1561070791-2526d30994b5?w=700&q=80" alt="Portfolio">
+                <div class="overlay">
+                    <div class="overlay-content">
+                        <span class="overlay-icon">👁️</span>
+                        <h3>Portfolio Website</h3>
+                        <p>Clean personal branding site</p>
+                    </div>
+                </div>
+            </article>
+            {% endif %}
+        </div>
+
+        <div class="portfolio-cta">
+            <h2>Ready to showcase your success story?</h2>
+            <p>Let's create a portfolio piece that turns heads and drives results.</p>
+            <a href="/contact" class="btn-primary">Start your project <span class="arrow">→</span></a>
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends 'website/base.html' %}
+{% load static %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/services.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<section class="services-page page-section">
+    <div class="container">
+
+        <div class="services-header">
+            <span class="eyebrow">Our Services</span>
+            <h1>Powerful digital solutions to grow your business</h1>
+            <p>We design and develop websites, applications, and digital systems that help businesses attract customers, improve efficiency, and scale faster.</p>
+            <p class="services-subtitle">Every project is built with fast performance, effortless updates, and a premium conversion focus.</p>
+        </div>
+
+        <div class="services-grid">
+            {% for s in services %}
+            <a href="/contact" class="service-card">
+                <div>
+                    <h3>{{ s.title }}</h3>
+                    <p>{{ s.description }}</p>
+                </div>
+                <div class="service-card-footer">
+                    <span class="service-note">Built for growth</span>
+                    <span class="arrow">→</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+
+        <div class="services-cta-panel">
+            <div class="services-cta-copy">
+                <span class="eyebrow">Let's collaborate</span>
+                <h2>Launch a premium digital experience with confidence.</h2>
+                <p>We help businesses build modern systems that are polished, easy to manage, and built to grow.</p>
+            </div>
+            <div class="cta-actions">
+                <a href="/contact" class="btn-primary">Contact our team</a>
+                <a href="/portfolio" class="btn-outline">View our work</a>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}

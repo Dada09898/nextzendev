@@ -1,0 +1,133 @@
+{% extends 'website/base.html' %}
+{% load static %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/contact.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<section class="contact-page page-section">
+    <div class="container">
+        <div class="contact-header">
+            <span class="eyebrow">Get in Touch</span>
+            <h1>Let's start building together.</h1>
+            <p>Have a project in mind? Fill out the form below and we'll get back to you within 24 hours.</p>
+        </div>
+
+        <div class="contact-wrapper">
+            <form method="POST" class="contact-form">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <input type="text" name="name" placeholder="Your Name" required>
+                </div>
+                <div class="form-group">
+                    <input type="email" name="email" placeholder="Email Address" required>
+                </div>
+                <div class="form-group">
+                    <input type="tel" name="phone" placeholder="Phone Number" required>
+                </div>
+                <div class="form-group">
+                    <select name="service" required>
+                        <option value="">What do you want to build?</option>
+                        <option value="website">Website Development</option>
+                        <option value="ecommerce">E-commerce Store</option>
+                        <option value="app">Mobile App</option>
+                        <option value="seo">SEO & Digital Marketing</option>
+                        <option value="analytics">Data Analytics</option>
+                        <option value="cloud">Cloud Solutions</option>
+                        <option value="consulting">Tech Consulting</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <select name="budget" required>
+                        <option value="">Project Budget</option>
+                        <option value="under-5k">Under ₹5,000</option>
+                        <option value="5k-15k">₹5,000 – ₹15,000</option>
+                        <option value="15k-50k">₹15,000 – ₹50,000</option>
+                        <option value="50k-100k">₹50,000 – ₹100,000</option>
+                        <option value="over-100k">Over ₹100,000</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <select name="timeline" required>
+                        <option value="">Project Timeline</option>
+                        <option value="asap">ASAP</option>
+                        <option value="1-month">Within 1 month</option>
+                        <option value="2-3-months">2–3 months</option>
+                        <option value="3-6-months">3–6 months</option>
+                        <option value="6-months-plus">6+ months</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <textarea name="message" placeholder="Tell us more about your project requirements" rows="6" required></textarea>
+                </div>
+
+                <!-- Referral Code -->
+                <div class="form-group">
+                    <input type="text" name="ref" id="ref_code_input"
+                           value="{{ ref_code }}"
+                           placeholder="🎁 Referral Code (optional)"
+                           maxlength="20">
+                    {% if ref_code %}
+                    <p style="font-size:12px;color:#22c55e;margin:6px 0 0 2px;">✅ Referral code applied — your friend will earn a reward!</p>
+                    {% else %}
+                    <p style="font-size:12px;color:#888;margin:6px 0 0 2px;">Have a referral code from a friend? Enter it here.</p>
+                    {% endif %}
+                </div>
+
+                <button type="submit" class="btn-primary">Send Message <span class="arrow">→</span></button>
+            </form>
+
+            <div class="contact-info">
+                {% with emails=site_settings.get_all_contact_emails %}
+                {% if emails %}
+                <div class="info-card">
+                    <span class="info-icon">📧</span>
+                    <h3>Email</h3>
+                    {% for email in emails %}
+                    <p><a href="mailto:{{ email }}">{{ email }}</a></p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
+
+                {% with phones=site_settings.get_all_contact_phones %}
+                {% if phones %}
+                <div class="info-card">
+                    <span class="info-icon">📞</span>
+                    <h3>Phone</h3>
+                    {% for phone in phones %}
+                    <p><a href="tel:{{ phone }}">{{ phone }}</a></p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
+
+                {% with whatsapps=site_settings.get_all_whatsapps %}
+                {% if whatsapps %}
+                <div class="info-card">
+                    <span class="info-icon">💬</span>
+                    <h3>WhatsApp</h3>
+                    {% for wa in whatsapps %}
+                    <p><a href="https://wa.me/{{ wa.number }}" target="_blank">{{ wa.display }}</a></p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
+
+                {% if site_settings.address %}
+                <div class="info-card">
+                    <span class="info-icon">📍</span>
+                    <h3>Address</h3>
+                    <p>{{ site_settings.address }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

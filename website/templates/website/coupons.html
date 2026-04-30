@@ -1,0 +1,68 @@
+{% extends 'website/base.html' %}
+{% block title %}Coupons & Offers — {{ site_settings.site_name }}{% endblock %}
+
+{% block content %}
+<section class="py-20 bg-gray-50 min-h-screen">
+  <div class="max-w-5xl mx-auto px-4">
+
+    <div class="text-center mb-12">
+      <h1 class="text-4xl font-bold text-gray-900 mb-3">🎁 Active Coupons</h1>
+      <p class="text-gray-500 text-lg">Use these codes at checkout to save on your project.</p>
+    </div>
+
+    {% if coupons %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for coupon in coupons %}
+      <div class="bg-white rounded-2xl shadow-md border border-dashed border-indigo-300 p-6 flex flex-col gap-3 hover:shadow-lg transition">
+        <div class="flex items-center justify-between">
+          <span class="text-2xl font-extrabold text-indigo-600 tracking-widest">{{ coupon.code }}</span>
+          {% if coupon.discount_type == 'percent' %}
+            <span class="bg-green-100 text-green-700 font-bold text-sm px-3 py-1 rounded-full">{{ coupon.discount_value }}% OFF</span>
+          {% else %}
+            <span class="bg-green-100 text-green-700 font-bold text-sm px-3 py-1 rounded-full">₹{{ coupon.discount_value }} OFF</span>
+          {% endif %}
+        </div>
+
+        {% if coupon.description %}
+        <p class="text-gray-500 text-sm">{{ coupon.description }}</p>
+        {% endif %}
+
+        <div class="text-xs text-gray-400 space-y-1">
+          {% if coupon.min_order_value %}
+          <p>Min. order: <strong class="text-gray-600">₹{{ coupon.min_order_value }}</strong></p>
+          {% endif %}
+          {% if coupon.valid_until %}
+          <p>Valid till: <strong class="text-gray-600">{{ coupon.valid_until|date:"d M Y" }}</strong></p>
+          {% endif %}
+          {% if coupon.max_uses %}
+          <p>Uses left: <strong class="text-gray-600">{{ coupon.uses_left }}</strong></p>
+          {% endif %}
+        </div>
+
+        <button onclick="copyCode('{{ coupon.code }}')"
+          class="mt-auto bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2 px-4 rounded-lg transition">
+          📋 Copy Code
+        </button>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="text-center py-20 text-gray-400">
+      <div class="text-6xl mb-4">🎟️</div>
+      <p class="text-xl font-medium">No active coupons right now.</p>
+      <p class="text-sm mt-2">Check back soon for exciting offers!</p>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+
+<script>
+function copyCode(code) {
+  navigator.clipboard.writeText(code).then(() => {
+    alert('✅ Coupon code "' + code + '" copied!');
+  });
+}
+</script>
+{% endblock %}

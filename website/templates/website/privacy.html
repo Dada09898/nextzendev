@@ -1,0 +1,21 @@
+{% extends 'website/base.html' %}
+
+{% block content %}
+<section class="legal-section">
+
+    <div class="container">
+
+        <div class="legal-box">
+            
+            <h1 class="legal-title">{{ data.title }}</h1>
+
+            <div class="legal-content">
+                {{ data.content|safe }}
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+{% endblock %}

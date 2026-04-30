@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>We received your enquiry</title>
+<style>
+  body { margin:0; padding:0; background:#f1f5f9; font-family:'Segoe UI',Arial,sans-serif; }
+  .wrap { max-width:580px; margin:40px auto; background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.08); }
+  .header { background:linear-gradient(135deg,#7c3aed,#2563eb); padding:40px 32px; text-align:center; }
+  .header h1 { color:#fff; margin:0; font-size:26px; font-weight:700; }
+  .header p  { color:rgba(255,255,255,0.85); margin:8px 0 0; font-size:15px; }
+  .body { padding:36px 32px; }
+  .body h2 { color:#1e293b; font-size:20px; margin:0 0 12px; }
+  .body p  { color:#475569; font-size:15px; line-height:1.7; margin:0 0 16px; }
+  .detail-box { background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:20px 24px; margin:20px 0; }
+  .detail-box .row { display:flex; gap:12px; margin-bottom:10px; font-size:14px; }
+  .detail-box .row:last-child { margin-bottom:0; }
+  .detail-box .label { color:#94a3b8; font-weight:600; min-width:90px; }
+  .detail-box .value { color:#1e293b; font-weight:500; }
+  .cta { text-align:center; margin:28px 0 8px; }
+  .cta a { background:linear-gradient(135deg,#7c3aed,#2563eb); color:#fff; text-decoration:none; padding:13px 32px; border-radius:10px; font-weight:600; font-size:15px; display:inline-block; }
+  .footer { background:#f8fafc; padding:24px 32px; text-align:center; border-top:1px solid #e2e8f0; }
+  .footer p { color:#94a3b8; font-size:13px; margin:4px 0; }
+  .footer a { color:#7c3aed; text-decoration:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <h1>✅ Enquiry Received!</h1>
+    <p>We'll get back to you very soon</p>
+  </div>
+
+  <div class="body">
+    <h2>Hi {{ name }},</h2>
+    <p>Thank you for reaching out to <strong>{{ site_name }}</strong>! We've received your project enquiry and our team will contact you within <strong>2–5 minutes</strong> on chat or phone.</p>
+
+    {% if project or budget or timeline %}
+    <div class="detail-box">
+      <p style="margin:0 0 14px;font-weight:600;color:#1e293b;font-size:14px;">📋 Your Enquiry Summary</p>
+      {% if project %}
+      <div class="row"><span class="label">Project</span><span class="value">{{ project }}</span></div>
+      {% endif %}
+      {% if budget %}
+      <div class="row"><span class="label">Budget</span><span class="value">{{ budget }}</span></div>
+      {% endif %}
+      {% if timeline %}
+      <div class="row"><span class="label">Timeline</span><span class="value">{{ timeline }}</span></div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <p>While you wait, feel free to check out our portfolio and pricing:</p>
+
+    <div class="cta">
+      <a href="{{ site_url }}/portfolio">View Our Work →</a>
+    </div>
+
+    <p style="font-size:14px;color:#94a3b8;">Have an urgent query? Reply to this email or WhatsApp us directly.</p>
+  </div>
+
+  <div class="footer">
+    <p><strong>{{ site_name }}</strong></p>
+    <p><a href="{{ site_url }}">{{ site_url }}</a></p>
+    <p style="margin-top:8px;">© {{ site_name }} · All rights reserved</p>
+  </div>
+
+</div>
+</body>
+</html>

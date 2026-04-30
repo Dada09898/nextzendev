@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice {{ payment.invoice_number }}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+    .wrapper { max-width: 620px; margin: 30px auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .header { background: linear-gradient(135deg, #6366f1, #8b5cf6); padding: 36px 40px; text-align: center; }
+    .header h1 { color: #fff; font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+    .header p  { color: rgba(255,255,255,0.8); margin-top: 4px; font-size: 14px; }
+    .badge { display: inline-block; background: rgba(255,255,255,0.2); color: #fff; border-radius: 20px; padding: 4px 14px; font-size: 12px; margin-top: 10px; font-weight: 600; }
+    .body { padding: 36px 40px; }
+    .greeting { font-size: 16px; margin-bottom: 24px; color: #555; }
+    .invoice-box { background: #f8f9ff; border: 1px solid #e0e4ff; border-radius: 10px; padding: 24px; margin-bottom: 24px; }
+    .invoice-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 14px; }
+    .invoice-row:last-child { border-bottom: none; }
+    .invoice-row .label { color: #666; }
+    .invoice-row .value { font-weight: 600; color: #333; }
+    .total-row { display: flex; justify-content: space-between; padding: 14px 20px; background: #6366f1; border-radius: 8px; margin-top: 16px; }
+    .total-row .label { color: rgba(255,255,255,0.85); font-size: 15px; }
+    .total-row .value { color: #fff; font-size: 20px; font-weight: 700; }
+    .success-badge { text-align: center; background: #ecfdf5; border: 1px solid #6ee7b7; border-radius: 10px; padding: 16px; margin-bottom: 24px; color: #065f46; font-weight: 600; font-size: 15px; }
+    .footer { background: #f8f9ff; padding: 24px 40px; text-align: center; border-top: 1px solid #eee; }
+    .footer p { font-size: 12px; color: #999; line-height: 1.6; }
+    .footer a { color: #6366f1; text-decoration: none; }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>{{ site_name }}</h1>
+    <p>Payment Confirmation & Invoice</p>
+    <span class="badge">✅ Payment Successful</span>
+  </div>
+
+  <!-- Body -->
+  <div class="body">
+
+    <p class="greeting">
+      Dear <strong>{{ payment.customer_name }}</strong>,<br><br>
+      Thank you for your payment! Your transaction has been processed successfully.
+      Below is your invoice summary for your records.
+    </p>
+
+    <div class="success-badge">
+      🎉 Payment of ₹{{ payment.final_amount }} received successfully!
+    </div>
+
+    <!-- Invoice Details -->
+    <div class="invoice-box">
+      <div class="invoice-row">
+        <span class="label">Invoice Number</span>
+        <span class="value">{{ payment.invoice_number }}</span>
+      </div>
+      <div class="invoice-row">
+        <span class="label">Date</span>
+        <span class="value">{{ payment.paid_at|date:"d M Y, h:i A" }}</span>
+      </div>
+      <div class="invoice-row">
+        <span class="label">Customer Name</span>
+        <span class="value">{{ payment.customer_name }}</span>
+      </div>
+      <div class="invoice-row">
+        <span class="label">Email</span>
+        <span class="value">{{ payment.customer_email }}</span>
+      </div>
+      {% if payment.customer_phone %}
+      <div class="invoice-row">
+        <span class="label">Phone</span>
+        <span class="value">{{ payment.customer_phone }}</span>
+      </div>
+      {% endif %}
+      <div class="invoice-row">
+        <span class="label">Description</span>
+        <span class="value">{{ payment.description|default:"Service Payment" }}</span>
+      </div>
+      <div class="invoice-row">
+        <span class="label">Payment ID</span>
+        <span class="value" style="font-size:12px; color:#888;">{{ payment.razorpay_payment_id }}</span>
+      </div>
+      {% if payment.discount_amount > 0 %}
+      <div class="invoice-row">
+        <span class="label">Original Amount</span>
+        <span class="value">₹{{ payment.amount }}</span>
+      </div>
+      <div class="invoice-row">
+        <span class="label">Discount{% if payment.coupon %} ({{ payment.coupon.code }}){% endif %}</span>
+        <span class="value" style="color:#10b981;">-₹{{ payment.discount_amount }}</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Total -->
+    <div class="total-row">
+      <span class="label">Amount Paid</span>
+      <span class="value">₹{{ payment.final_amount }}</span>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <p>
+      For any questions about this invoice, contact us at
+      <a href="mailto:{{ support_email }}">{{ support_email }}</a>
+    </p>
+    <p style="margin-top:8px;">
+      Thank you for choosing {{ site_name }}. We look forward to delivering an exceptional project for you! 🚀
+    </p>
+    <p style="margin-top:12px; font-size:11px;">
+      This is an auto-generated invoice. Please keep it for your records.
+    </p>
+  </div>
+
+</div>
+</body>
+</html>

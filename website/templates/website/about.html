@@ -1,0 +1,81 @@
+{% extends 'website/base.html' %}
+{% load static %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/about.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<section class="about page-section">
+    <div class="about-container">
+
+        <div class="about-top">
+            <div class="about-copy">
+                <span class="eyebrow">About NextZenDev</span>
+                <h1>About NextZenDev</h1>
+                <p class="about-text">
+                    {% if hero %}
+                        {{ hero.subheading }}
+                    {% else %}
+                        NextZenDev is a modern web and app development agency focused on building clean, scalable and high-performance digital solutions for businesses.
+                    {% endif %}
+                </p>
+                <a href="/contact" class="btn-primary about-cta">Let's build together <span class="arrow">→</span></a>
+            </div>
+
+            <div class="about-highlight">
+                <div class="about-surface">
+                    <h2>Design-led development for ambitious teams</h2>
+                    <p>We create digital products that feel premium, move fast, and stay easy to manage from your admin panel.</p>
+                    <div class="highlight-badges">
+                        <span>Modern UI/UX</span>
+                        <span>Fast performance</span>
+                        <span>Admin-friendly</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STATS -->
+        <div class="about-stats">
+            <div>
+                <h2>50+</h2>
+                <p>Projects Completed</p>
+            </div>
+            <div>
+                <h2>20+</h2>
+                <p>Happy Clients</p>
+            </div>
+            <div>
+                <h2>3+</h2>
+                <p>Years Experience</p>
+            </div>
+        </div>
+
+        <!-- WHY US -->
+        <div class="about-why">
+            <h2>Why Choose Us</h2>
+            <div class="why-grid">
+                <div class="why-card">
+                    <span class="why-icon">🎨</span>
+                    <h3>Clean Design</h3>
+                    <p>Minimal and modern UI focused on user experience and conversion.</p>
+                </div>
+                <div class="why-card">
+                    <span class="why-icon">⚡</span>
+                    <h3>Fast Performance</h3>
+                    <p>Optimised code for speed, Core Web Vitals, and efficiency.</p>
+                </div>
+                <div class="why-card">
+                    <span class="why-icon">📈</span>
+                    <h3>Scalable Systems</h3>
+                    <p>Built to grow with your business needs and traffic demands.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}

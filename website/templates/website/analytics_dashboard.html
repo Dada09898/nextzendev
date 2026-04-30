@@ -1,0 +1,221 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Analytics Dashboard — {{ site_header }}{% endblock %}
+
+{% block content %}
+<style>
+  .kpi-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:16px; margin-bottom:32px; }
+  .kpi-card { background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:20px 16px; text-align:center; }
+  .kpi-card .value { font-size:28px; font-weight:800; color:#1e293b; }
+  .kpi-card .label { font-size:12px; color:#64748b; margin-top:4px; text-transform:uppercase; letter-spacing:.5px; }
+  .chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:32px; }
+  .chart-box { background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:20px; }
+  .chart-box h3 { margin:0 0 16px; font-size:14px; color:#374151; }
+  .section-title { font-size:18px; font-weight:700; color:#1e293b; margin:28px 0 12px; }
+  table.analytics-table { width:100%; border-collapse:collapse; background:#fff; border-radius:10px; overflow:hidden; border:1px solid #e5e7eb; }
+  table.analytics-table th { background:#f8fafc; color:#64748b; font-size:12px; text-transform:uppercase; padding:10px 14px; text-align:left; }
+  table.analytics-table td { padding:10px 14px; border-top:1px solid #f1f5f9; font-size:13px; color:#374151; }
+  .period-tabs { margin-bottom:20px; }
+  .period-tabs a { display:inline-block; padding:6px 14px; border-radius:6px; margin-right:6px; font-size:13px; border:1px solid #e5e7eb; text-decoration:none; color:#374151; }
+  .period-tabs a.active { background:#3b82f6; color:#fff; border-color:#3b82f6; }
+  @media(max-width:768px){ .chart-grid{ grid-template-columns:1fr; } }
+</style>
+
+{# ── Django data passed via hidden JSON elements (fixes JS linter errors) ── #}
+<div id="django-data"
+  data-rev-labels='{{ rev_labels }}'
+  data-rev-values='{{ rev_values }}'
+  data-lead-labels='{{ lead_labels }}'
+  data-lead-counts='{{ lead_counts }}'
+  data-source-labels='{{ source_labels }}'
+  data-source-counts='{{ source_counts }}'
+  data-status-labels='{{ status_labels }}'
+  data-status-counts='{{ status_counts }}'
+  style="display:none;">
+</div>
+
+<h1 style="font-size:24px;font-weight:800;margin-bottom:8px;">📊 Analytics Dashboard</h1>
+
+<!-- Period selector -->
+<div class="period-tabs">
+  <a href="?period=7"   class="{% if period == 7   %}active{% endif %}">7 Days</a>
+  <a href="?period=30"  class="{% if period == 30  %}active{% endif %}">30 Days</a>
+  <a href="?period=90"  class="{% if period == 90  %}active{% endif %}">3 Months</a>
+  <a href="?period=365" class="{% if period == 365 %}active{% endif %}">1 Year</a>
+</div>
+
+<!-- KPI Cards -->
+<div class="kpi-grid">
+  <div class="kpi-card">
+    <div class="value">{{ total_leads }}</div>
+    <div class="label">Total Leads</div>
+  </div>
+  <div class="kpi-card">
+    <div class="value" style="color:#3b82f6;">{{ new_leads }}</div>
+    <div class="label">New (Period)</div>
+  </div>
+  <div class="kpi-card">
+    <div class="value" style="color:#10b981;">{{ converted_leads }}</div>
+    <div class="label">Converted</div>
+  </div>
+  <div class="kpi-card">
+    <div class="value" style="color:#f59e0b;">{{ conversion_rate }}%</div>
+    <div class="label">Conversion Rate</div>
+  </div>
+  <div class="kpi-card">
+    <div class="value" style="color:#10b981;">₹{{ total_revenue|floatformat:0 }}</div>
+    <div class="label">Total Revenue</div>
+  </div>
+  <div class="kpi-card">
+    <div class="value" style="color:#6366f1;">₹{{ revenue_period|floatformat:0 }}</div>
+    <div class="label">Revenue (Period)</div>
+  </div>
+  <div class="kpi-card">
+    <div class="value">{{ total_orders }}</div>
+    <div class="label">Total Orders</div>
+  </div>
+  <div class="kpi-card">
+    <div class="value" style="color:#0ea5e9;">₹{{ avg_order_value }}</div>
+    <div class="label">Avg Order Value</div>
+  </div>
+  <div class="kpi-card">
+    <div class="value" style="color:#10b981;">{{ emails_sent }}</div>
+    <div class="label">Emails Sent</div>
+  </div>
+  <div class="kpi-card">
+    <div class="value" style="color:#ef4444;">{{ emails_failed }}</div>
+    <div class="label">Emails Failed</div>
+  </div>
+</div>
+
+<!-- Charts -->
+<div class="chart-grid">
+  <div class="chart-box">
+    <h3>📈 Monthly Revenue (₹)</h3>
+    <canvas id="revenueChart" height="220"></canvas>
+  </div>
+  <div class="chart-box">
+    <h3>👥 Monthly Leads</h3>
+    <canvas id="leadChart" height="220"></canvas>
+  </div>
+  <div class="chart-box">
+    <h3>🎯 Lead Source Breakdown</h3>
+    <canvas id="sourceChart" height="220"></canvas>
+  </div>
+  <div class="chart-box">
+    <h3>🔄 Lead Status</h3>
+    <canvas id="statusChart" height="220"></canvas>
+  </div>
+</div>
+
+<!-- Top Services -->
+<p class="section-title">🔥 Top Services by Lead Count</p>
+<table class="analytics-table">
+  <thead><tr><th>#</th><th>Service</th><th>Lead Count</th></tr></thead>
+  <tbody>
+  {% for s in top_services %}
+  <tr>
+    <td>{{ forloop.counter }}</td>
+    <td>{{ s.service }}</td>
+    <td><strong>{{ s.count }}</strong></td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="3" style="text-align:center;color:#9ca3af;">No data yet</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<!-- Top Clients -->
+<p class="section-title">💎 Top Clients by Revenue</p>
+<table class="analytics-table">
+  <thead><tr><th>#</th><th>Client</th><th>Email</th><th>Orders</th><th>Total Revenue</th></tr></thead>
+  <tbody>
+  {% for c in top_clients %}
+  <tr>
+    <td>{{ forloop.counter }}</td>
+    <td>{{ c.customer_name }}</td>
+    <td>{{ c.customer_email }}</td>
+    <td>{{ c.orders }}</td>
+    <td><strong>₹{{ c.total|floatformat:0 }}</strong></td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="5" style="text-align:center;color:#9ca3af;">No payments yet</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+  // Read Django data from data attributes — no template tags inside JS (fixes linter)
+  var dd = document.getElementById('django-data').dataset;
+  var revLabels    = JSON.parse(dd.revLabels);
+  var revValues    = JSON.parse(dd.revValues);
+  var leadLabels   = JSON.parse(dd.leadLabels);
+  var leadCounts   = JSON.parse(dd.leadCounts);
+  var sourceLabels = JSON.parse(dd.sourceLabels);
+  var sourceCounts = JSON.parse(dd.sourceCounts);
+  var statusLabels = JSON.parse(dd.statusLabels);
+  var statusCounts = JSON.parse(dd.statusCounts);
+
+  var COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#6366f1','#0ea5e9','#8b5cf6','#ec4899'];
+
+  // Revenue bar chart
+  new Chart(document.getElementById('revenueChart'), {
+    type: 'bar',
+    data: {
+      labels: revLabels,
+      datasets: [{
+        label: 'Revenue ₹',
+        data: revValues,
+        backgroundColor: '#3b82f6',
+        borderRadius: 6
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  // Leads line chart
+  new Chart(document.getElementById('leadChart'), {
+    type: 'line',
+    data: {
+      labels: leadLabels,
+      datasets: [{
+        label: 'Leads',
+        data: leadCounts,
+        borderColor: '#10b981',
+        backgroundColor: 'rgba(16,185,129,.15)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 4
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  // Source doughnut
+  new Chart(document.getElementById('sourceChart'), {
+    type: 'doughnut',
+    data: {
+      labels: sourceLabels,
+      datasets: [{ data: sourceCounts, backgroundColor: COLORS }]
+    },
+    options: { plugins: { legend: { position: 'bottom' } } }
+  });
+
+  // Status pie
+  new Chart(document.getElementById('statusChart'), {
+    type: 'pie',
+    data: {
+      labels: statusLabels,
+      datasets: [{ data: statusCounts, backgroundColor: COLORS }]
+    },
+    options: { plugins: { legend: { position: 'bottom' } } }
+  });
+</script>
+{% endblock %}

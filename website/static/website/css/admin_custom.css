@@ -1,0 +1,18 @@
+/* Admin Logo Size Fix */
+.main-sidebar .brand-link .brand-image,
+.layout-fixed .brand-link .brand-image {
+    max-height: 28px !important;
+    width: auto !important;
+    margin-right: 6px !important;
+    object-fit: contain !important;
+}
+
+/* Brand text hide — "Django administration" / site name text */
+.main-sidebar .brand-link .brand-text,
+.brand-link .brand-text.fw-light,
+span.brand-text {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    overflow: hidden !important;
+}

@@ -1,0 +1,42 @@
+{% extends "website/base.html" %}
+{% block title %}Payment Successful{% endblock %}
+
+{% block content %}
+<section class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 px-4">
+  <div class="max-w-md w-full text-center">
+    {% if payment %}
+    <div class="bg-gray-800 border border-gray-700 rounded-2xl p-10 shadow-2xl">
+      <div class="text-6xl mb-6">✅</div>
+      <h1 class="text-3xl font-bold text-white mb-3">Payment Successful!</h1>
+      <p class="text-gray-400 mb-6">Your invoice has been sent to <strong class="text-white">{{ payment.customer_email }}</strong></p>
+
+      <div class="bg-gray-900 rounded-xl p-5 text-left space-y-3 text-sm mb-8">
+        <div class="flex justify-between">
+          <span class="text-gray-400">Invoice</span>
+          <span class="text-white font-bold">{{ payment.invoice_number }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-400">Amount Paid</span>
+          <span class="text-green-400 font-bold text-base">₹{{ payment.final_amount }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-400">Payment ID</span>
+          <span class="text-gray-300 text-xs">{{ payment.razorpay_payment_id }}</span>
+        </div>
+      </div>
+
+      <a href="/" class="block w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition">
+        🏠 Back to Home
+      </a>
+    </div>
+    {% else %}
+    <div class="bg-gray-800 border border-gray-700 rounded-2xl p-10 shadow-2xl">
+      <div class="text-5xl mb-4">🎉</div>
+      <h1 class="text-2xl font-bold text-white mb-3">Thank you for your payment!</h1>
+      <p class="text-gray-400 mb-6">Your invoice has been sent to your email address.</p>
+      <a href="/" class="inline-block bg-indigo-600 text-white px-8 py-3 rounded-xl hover:bg-indigo-500 transition">Back to Home</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

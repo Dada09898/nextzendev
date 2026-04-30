@@ -1,0 +1,24 @@
+{% extends 'website/base.html' %}
+{% load static %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/refund.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="refund-section">
+    <div class="container">
+        <div class="refund-box">
+
+            <h1 class="refund-title">
+                {{ data.title|default:"Refund Policy" }}
+            </h1>
+
+            <div class="refund-content">
+                {{ data.content|safe }}
+            </div>
+
+        </div>
+    </div>
+</section>
+{% endblock %}

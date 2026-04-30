@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Thanks for reaching out</title>
+<style>
+  body { margin:0; padding:0; background:#f1f5f9; font-family:'Segoe UI',Arial,sans-serif; }
+  .wrap { max-width:580px; margin:40px auto; background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.08); }
+  .header { background:linear-gradient(135deg,#0ea5e9,#7c3aed); padding:40px 32px; text-align:center; }
+  .header h1 { color:#fff; margin:0; font-size:26px; font-weight:700; }
+  .header p  { color:rgba(255,255,255,0.85); margin:8px 0 0; font-size:15px; }
+  .body { padding:36px 32px; }
+  .body h2 { color:#1e293b; font-size:20px; margin:0 0 12px; }
+  .body p  { color:#475569; font-size:15px; line-height:1.7; margin:0 0 16px; }
+  .msg-box { background:#f8fafc; border-left:4px solid #7c3aed; border-radius:0 10px 10px 0; padding:16px 20px; margin:20px 0; font-size:14px; color:#334155; line-height:1.6; }
+  .steps { margin:20px 0; }
+  .step  { display:flex; align-items:flex-start; gap:14px; margin-bottom:16px; }
+  .step .num { background:#7c3aed; color:#fff; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; flex-shrink:0; margin-top:1px; }
+  .step .text { color:#334155; font-size:14px; line-height:1.6; }
+  .step .text strong { color:#1e293b; }
+  .footer { background:#f8fafc; padding:24px 32px; text-align:center; border-top:1px solid #e2e8f0; }
+  .footer p { color:#94a3b8; font-size:13px; margin:4px 0; }
+  .footer a { color:#7c3aed; text-decoration:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <h1>📨 Message Received!</h1>
+    <p>We'll be in touch shortly</p>
+  </div>
+
+  <div class="body">
+    <h2>Hi {{ name }},</h2>
+    <p>Thanks for contacting <strong>{{ site_name }}</strong>! We've received your message and will get back to you within <strong>24 hours</strong> (usually much sooner).</p>
+
+    {% if message %}
+    <p style="font-size:13px;color:#94a3b8;margin-bottom:6px;">Your message:</p>
+    <div class="msg-box">{{ message }}</div>
+    {% endif %}
+
+    <p><strong>What happens next?</strong></p>
+    <div class="steps">
+      <div class="step">
+        <div class="num">1</div>
+        <div class="text"><strong>Review</strong> — Our team reviews your message and requirements.</div>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <div class="text"><strong>Connect</strong> — We'll reach out via email or phone to discuss your project.</div>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <div class="text"><strong>Proposal</strong> — We send a detailed proposal tailored to your needs.</div>
+      </div>
+    </div>
+
+    <p style="font-size:14px;color:#94a3b8;">Need immediate help? Just reply to this email — we're here.</p>
+  </div>
+
+  <div class="footer">
+    <p><strong>{{ site_name }}</strong></p>
+    <p><a href="{{ site_url }}">{{ site_url }}</a> · <a href="mailto:{{ support_email }}">{{ support_email }}</a></p>
+    <p style="margin-top:8px;">© {{ site_name }} · All rights reserved</p>
+  </div>
+
+</div>
+</body>
+</html>

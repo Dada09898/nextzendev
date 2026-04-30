@@ -1,0 +1,482 @@
+{% extends 'website/base.html' %}
+{% block title %}Book a Consultation — {{ site_settings.site_name }}{% endblock %}
+
+{% block content %}
+<style>
+  /* ── Force navbar always dark (same as home scrolled state) ── */
+  #navbar {
+    background: #141c25 !important;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.25) !important;
+  }
+
+  /* ── Page root ── */
+  .appt-page {
+    min-height: 100vh;
+    background: #0f1117;
+    font-family: 'DM Sans', sans-serif;
+    padding: 80px 20px 100px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .appt-page::before {
+    content: '';
+    position: fixed;
+    top: -200px; right: -200px;
+    width: 700px; height: 700px;
+    background: radial-gradient(circle, rgba(26,184,122,0.07) 0%, transparent 65%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .appt-page::after {
+    content: '';
+    position: fixed;
+    bottom: -200px; left: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(61,90,255,0.06) 0%, transparent 65%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .appt-container {
+    max-width: 680px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Header ── */
+  .appt-header {
+    text-align: center;
+    margin-bottom: 40px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .appt-header .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(26,184,122,0.12);
+    border: 1px solid rgba(26,184,122,0.25);
+    color: #1ab87a;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 999px;
+    margin-bottom: 20px;
+  }
+
+  .appt-header h1 {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(32px, 5vw, 48px);
+    color: #f1f5f9;
+    line-height: 1.15;
+    margin-bottom: 14px;
+  }
+
+  .appt-header h1 em {
+    font-style: italic;
+    color: #1ab87a;
+  }
+
+  .appt-header p {
+    color: #64748b;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  .trust-row {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-top: 22px;
+  }
+
+  .trust-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12.5px;
+    color: #475569;
+  }
+
+  .trust-item .dot {
+    width: 6px; height: 6px;
+    background: #1ab87a;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ── Error Banner ── */
+  .error-banner {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+  }
+
+  .error-banner p {
+    color: #f87171;
+    font-size: 13.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .error-banner p:last-child { margin-bottom: 0; }
+
+  /* ── Card ── */
+  .appt-card {
+    background: #12151f;
+    border: 1px solid #1e2130;
+    border-radius: 20px;
+    overflow: hidden;
+    animation: fadeUp 0.6s 0.15s ease both;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.35);
+  }
+
+  /* ── Form Sections ── */
+  .form-section {
+    padding: 28px 36px;
+    border-bottom: 1px solid #1e2130;
+  }
+  .form-section:last-of-type { border-bottom: none; }
+
+  .section-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #334155;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #1e2130;
+  }
+
+  /* ── Field Grid ── */
+  .field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .field-grid.single { grid-template-columns: 1fr; }
+
+  @media (max-width: 520px) {
+    .field-grid { grid-template-columns: 1fr; }
+    .form-section { padding: 22px 20px; }
+  }
+
+  /* ── Fields ── */
+  .field { display: flex; flex-direction: column; gap: 7px; }
+
+  .field label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #94a3b8;
+    letter-spacing: 0.02em;
+  }
+  .field label .req { color: #1ab87a; margin-left: 2px; }
+
+  .field input,
+  .field select,
+  .field textarea {
+    border: 1.5px solid #1e2130;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    color: #e2e8f0;
+    background: #0f1117;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    width: 100%;
+  }
+  .field input::placeholder,
+  .field textarea::placeholder { color: #334155; }
+
+  .field input:focus,
+  .field select:focus,
+  .field textarea:focus {
+    border-color: #1ab87a;
+    box-shadow: 0 0 0 3px rgba(26,184,122,0.12);
+  }
+  .field select { cursor: pointer; }
+  .field select option { background: #1a1d27; color: #e2e8f0; }
+  .field textarea { resize: vertical; min-height: 100px; }
+
+  /* dark calendar/clock icon */
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) opacity(0.35);
+    cursor: pointer;
+  }
+
+  /* ── Meeting Type ── */
+  .meeting-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  @media (max-width: 520px) {
+    .meeting-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .meeting-option { position: relative; }
+  .meeting-option input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+
+  .meeting-option label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    padding: 16px 10px 14px;
+    border: 1.5px solid #1e2130;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #0f1117;
+    text-align: center;
+  }
+  .meeting-option label .icon { font-size: 22px; }
+  .meeting-option label .name { font-size: 12px; font-weight: 600; color: #475569; }
+
+  .meeting-option input:checked + label {
+    border-color: #1ab87a;
+    background: rgba(26,184,122,0.08);
+    box-shadow: 0 0 0 3px rgba(26,184,122,0.12);
+  }
+  .meeting-option input:checked + label .name { color: #1ab87a; }
+  .meeting-option label:hover { border-color: #1ab87a; background: rgba(26,184,122,0.05); }
+
+  /* ── Submit ── */
+  .submit-section {
+    padding: 28px 36px 36px;
+    background: #0d0f18;
+    border-top: 1px solid #1e2130;
+  }
+  @media (max-width: 520px) { .submit-section { padding: 22px 20px 28px; } }
+
+  .submit-btn {
+    width: 100%;
+    background: #1ab87a;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 16px 24px;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    letter-spacing: 0.01em;
+    position: relative;
+    overflow: hidden;
+  }
+  .submit-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 60%);
+  }
+  .submit-btn:hover {
+    background: #149060;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba(26,184,122,0.35);
+  }
+  .submit-btn:active { transform: translateY(0); }
+
+  .submit-note {
+    text-align: center;
+    margin-top: 14px;
+    font-size: 12.5px;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+<section class="appt-page">
+  <div class="appt-container">
+
+    <div class="appt-header">
+      <div class="eyebrow">
+        <span>●</span> Free Consultation — No Obligation
+      </div>
+      <h1>Let's Talk About<br><em>Your Project</em></h1>
+      <p>Pick a time that works for you. We'll reach out to confirm within a few hours.</p>
+      <div class="trust-row">
+        <span class="trust-item"><span class="dot"></span> No payment required</span>
+        <span class="trust-item"><span class="dot"></span> Confirmation within 2–4 hrs</span>
+        <span class="trust-item"><span class="dot"></span> Cancel anytime</span>
+      </div>
+    </div>
+
+    {% if errors %}
+    <div class="error-banner">
+      {% for field, error in errors.items %}
+      <p>⚠ {{ error }}</p>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="appt-card">
+      <form method="POST" action="{% url 'book_appointment' %}" id="appointmentForm">
+        {% csrf_token %}
+
+        <!-- Your Info -->
+        <div class="form-section">
+          <div class="section-title">Your Information</div>
+          <div class="field-grid">
+            <div class="field">
+              <label>Full Name <span class="req">*</span></label>
+              <input type="text" name="name" required value="{{ form_data.name|default:'' }}" placeholder="Rahul Sharma" />
+            </div>
+            <div class="field">
+              <label>Email Address <span class="req">*</span></label>
+              <input type="email" name="email" required value="{{ form_data.email|default:'' }}" placeholder="rahul@company.com" />
+            </div>
+            <div class="field">
+              <label>Phone Number</label>
+              <input type="tel" name="phone" value="{{ form_data.phone|default:'' }}" placeholder="+91 98765 43210" />
+            </div>
+            <div class="field">
+              <label>Company / Organisation</label>
+              <input type="text" name="company" value="{{ form_data.company|default:'' }}" placeholder="Your company name" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Service -->
+        <div class="form-section">
+          <div class="section-title">Service</div>
+          <div class="field-grid single">
+            <div class="field">
+              <label>What can we help you with?</label>
+              <select name="service">
+                <option value="">— Select a service —</option>
+                {% if nav_services %}
+                  {% for s in nav_services %}
+                  <option value="{{ s.name }}" {% if form_data.service == s.name %}selected{% endif %}>{{ s.name }}</option>
+                  {% endfor %}
+                {% else %}
+                  <option value="Website Development" {% if form_data.service == 'Website Development' %}selected{% endif %}>Website Development</option>
+                  <option value="E-commerce" {% if form_data.service == 'E-commerce' %}selected{% endif %}>E-commerce</option>
+                  <option value="App Development" {% if form_data.service == 'App Development' %}selected{% endif %}>App Development</option>
+                  <option value="SEO & Growth" {% if form_data.service == 'SEO & Growth' %}selected{% endif %}>SEO &amp; Growth</option>
+                  <option value="Data Analytics" {% if form_data.service == 'Data Analytics' %}selected{% endif %}>Data Analytics</option>
+                  <option value="Cloud Solutions" {% if form_data.service == 'Cloud Solutions' %}selected{% endif %}>Cloud Solutions</option>
+                  <option value="Digital Marketing" {% if form_data.service == 'Digital Marketing' %}selected{% endif %}>Digital Marketing</option>
+                  <option value="Tech Consulting" {% if form_data.service == 'Tech Consulting' %}selected{% endif %}>Tech Consulting</option>
+                {% endif %}
+                <option value="Other">Other / Not sure yet</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Date & Time -->
+        <div class="form-section">
+          <div class="section-title">Preferred Schedule</div>
+          <div class="field-grid">
+            <div class="field">
+              <label>Preferred Date <span class="req">*</span></label>
+              <input type="date" name="date" required value="{{ form_data.date|default:'' }}" />
+            </div>
+            <div class="field">
+              <label>Preferred Time <span class="req">*</span></label>
+              <input type="time" name="time" required value="{{ form_data.time|default:'' }}" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Meeting Type -->
+        <div class="form-section">
+          <div class="section-title">Meeting Format</div>
+          <div class="meeting-grid">
+            <div class="meeting-option">
+              <input type="radio" name="meeting_type" value="zoom" id="mt-zoom"
+                {% if form_data.meeting_type == 'zoom' or not form_data.meeting_type %}checked{% endif %} />
+              <label for="mt-zoom">
+                <span class="icon">🎥</span>
+                <span class="name">Zoom</span>
+              </label>
+            </div>
+            <div class="meeting-option">
+              <input type="radio" name="meeting_type" value="meet" id="mt-meet"
+                {% if form_data.meeting_type == 'meet' %}checked{% endif %} />
+              <label for="mt-meet">
+                <span class="icon">📹</span>
+                <span class="name">Google Meet</span>
+              </label>
+            </div>
+            <div class="meeting-option">
+              <input type="radio" name="meeting_type" value="phone" id="mt-phone"
+                {% if form_data.meeting_type == 'phone' %}checked{% endif %} />
+              <label for="mt-phone">
+                <span class="icon">📞</span>
+                <span class="name">Phone Call</span>
+              </label>
+            </div>
+            <div class="meeting-option">
+              <input type="radio" name="meeting_type" value="in_person" id="mt-inperson"
+                {% if form_data.meeting_type == 'in_person' %}checked{% endif %} />
+              <label for="mt-inperson">
+                <span class="icon">🤝</span>
+                <span class="name">In Person</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Message -->
+        <div class="form-section">
+          <div class="section-title">Anything Else?</div>
+          <div class="field-grid single">
+            <div class="field">
+              <label>Your Message <span style="color:#334155;font-weight:400">(optional)</span></label>
+              <textarea name="message" placeholder="Tell us briefly what you'd like to discuss, your goals, or any context that would help us prepare for the call...">{{ form_data.message|default:'' }}</textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="submit-section">
+          <button type="submit" class="submit-btn">
+            <span>📅</span> Request My Free Consultation
+          </button>
+          <p class="submit-note">🔒 Your information is secure and never shared with third parties.</p>
+        </div>
+
+      </form>
+    </div>
+
+  </div>
+</section>
+
+<script>
+  const dateInput = document.querySelector('input[name="date"]');
+  if (dateInput) dateInput.min = new Date().toISOString().split('T')[0];
+</script>
+{% endblock %}

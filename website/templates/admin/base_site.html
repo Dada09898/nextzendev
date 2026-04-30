@@ -1,0 +1,18 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block branding %}
+<a href="{% url 'admin:index' %}" class="brand-link" style="display:flex; align-items:center; padding: 8px 16px;">
+    {% with site=site_settings %}
+        {% if site and site.logo %}
+            <img src="{{ site.logo.url }}"
+                 alt="{{ site.site_name }}"
+                 style="max-height: 38px; width: auto; object-fit: contain;">
+        {% else %}
+            <span style="color:white; font-weight:600; font-size:16px;">
+                {% if site %}{{ site.site_name }}{% else %}Admin{% endif %}
+            </span>
+        {% endif %}
+    {% endwith %}
+</a>
+{% endblock %}

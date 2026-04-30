@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Your Referral Link — {{ site_name }}</title>
+</head>
+<body style="margin:0;padding:0;background:#eef2ff;font-family:'Segoe UI',Arial,sans-serif;">
+
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#eef2ff;padding:40px 0;">
+  <tr><td align="center">
+  <table width="600" cellpadding="0" cellspacing="0"
+         style="max-width:600px;width:100%;border-radius:16px;overflow:hidden;
+                box-shadow:0 4px 24px rgba(79,70,229,.12);">
+
+    <!-- HEADER -->
+    <tr>
+      <td style="background:linear-gradient(135deg,#4f46e5 0%,#6d28d9 100%);
+                  padding:44px 48px 36px;text-align:center;">
+        <div style="font-size:52px;margin-bottom:14px;">🔗</div>
+        <h1 style="margin:0;color:#fff;font-size:26px;font-weight:700;letter-spacing:-.3px;">
+          Your Referral Link is Ready!
+        </h1>
+        <p style="margin:10px 0 0;color:#c7d2fe;font-size:15px;">
+          Share it and earn rewards for every successful referral
+        </p>
+      </td>
+    </tr>
+
+    <!-- BODY -->
+    <tr>
+      <td style="background:#ffffff;padding:40px 48px;">
+
+        <p style="margin:0 0 20px;color:#374151;font-size:16px;line-height:1.6;">
+          Hi <strong style="color:#111827;">{{ name }}</strong> 👋
+        </p>
+        <p style="margin:0 0 28px;color:#6b7280;font-size:15px;line-height:1.6;">
+          We've created a unique referral link for you. Share it with a friend who
+          needs IT solutions — when they place their first project using your link,
+          our team will review and approve your reward. You'll receive a reward confirmation email once it's processed!
+        </p>
+
+        <!-- SINGLE USE WARNING -->
+        <table width="100%" cellpadding="0" cellspacing="0"
+               style="background:#fefce8;border:2px solid #fde047;border-radius:10px;margin-bottom:20px;">
+          <tr>
+            <td style="padding:14px 20px;">
+              <p style="margin:0;color:#854d0e;font-size:14px;font-weight:700;">
+                ⚠️ &nbsp;SINGLE USE ONLY — Valid for 1 Customer
+              </p>
+              <p style="margin:5px 0 0;color:#92400e;font-size:13px;line-height:1.5;">
+                This link can only be used by <strong>one person</strong>. Once someone
+                signs up using your link, it will be automatically deactivated.
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        <!-- REFERRAL LINK BOX -->
+        <table width="100%" cellpadding="0" cellspacing="0"
+               style="background:#f5f3ff;border:2px solid #ddd6fe;border-radius:12px;margin-bottom:20px;">
+          <tr>
+            <td style="padding:22px 24px;">
+              <p style="margin:0 0 8px;font-size:11px;color:#9ca3af;
+                          text-transform:uppercase;letter-spacing:.08em;font-weight:600;">
+                YOUR REFERRAL LINK
+              </p>
+              <p style="margin:0 0 14px;word-break:break-all;">
+                <a href="{{ ref_link }}"
+                   style="color:#4f46e5;font-size:14px;font-family:monospace;
+                           text-decoration:none;font-weight:500;">
+                  {{ ref_link }}
+                </a>
+              </p>
+              <p style="margin:0;font-size:12px;color:#6b7280;">
+                Referral Code: &nbsp;
+                <strong style="color:#4f46e5;font-family:monospace;background:#ede9fe;
+                                padding:3px 10px;border-radius:4px;font-size:13px;">
+                  {{ referral_code }}
+                </strong>
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        <!-- EXPIRY DATE — only if admin ne set kiya -->
+        {% if expiry_str %}
+        <table width="100%" cellpadding="0" cellspacing="0"
+               style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;margin-bottom:20px;">
+          <tr>
+            <td style="padding:14px 20px;">
+              <p style="margin:0;color:#9a3412;font-size:14px;font-weight:700;">
+                ⏰ &nbsp;Code Expiry Date
+              </p>
+              <p style="margin:6px 0 0;color:#c2410c;font-size:16px;font-weight:700;">
+                {{ expiry_str }}
+              </p>
+              <p style="margin:4px 0 0;color:#ea580c;font-size:12px;">
+                Share this link before it expires!
+              </p>
+            </td>
+          </tr>
+        </table>
+        {% endif %}
+
+        <!-- HOW IT WORKS -->
+        <p style="margin:0 0 14px;color:#111827;font-weight:700;font-size:15px;">
+          How it works:
+        </p>
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+          <tr>
+            <td width="30%" align="center"
+                style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px 10px;">
+              <div style="font-size:26px;margin-bottom:8px;">📤</div>
+              <p style="margin:0;font-size:12px;font-weight:600;color:#374151;">Share Your Link</p>
+              <p style="margin:4px 0 0;font-size:11px;color:#9ca3af;">Send to 1 friend</p>
+            </td>
+            <td width="5%" align="center" style="color:#d1d5db;font-size:22px;">›</td>
+            <td width="30%" align="center"
+                style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px 10px;">
+              <div style="font-size:26px;margin-bottom:8px;">✅</div>
+              <p style="margin:0;font-size:12px;font-weight:600;color:#374151;">They Sign Up</p>
+              <p style="margin:4px 0 0;font-size:11px;color:#9ca3af;">Places a project</p>
+            </td>
+            <td width="5%" align="center" style="color:#d1d5db;font-size:22px;">›</td>
+            <td width="30%" align="center"
+                style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px 10px;">
+              <div style="font-size:26px;margin-bottom:8px;">💰</div>
+              <p style="margin:0;font-size:12px;font-weight:600;color:#374151;">You Earn</p>
+              <p style="margin:4px 0 0;font-size:11px;color:#9ca3af;">Reward approved by team</p>
+            </td>
+          </tr>
+        </table>
+
+        <!-- CTA -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+          <tr>
+            <td align="center">
+              <a href="{{ ref_link }}"
+                 style="display:inline-block;background:linear-gradient(135deg,#4f46e5,#7c3aed);
+                         color:#fff;font-size:15px;font-weight:600;
+                         padding:14px 40px;border-radius:8px;text-decoration:none;">
+                🔗 &nbsp;Share My Referral Link
+              </a>
+            </td>
+          </tr>
+        </table>
+
+        <p style="margin:0;color:#9ca3af;font-size:13px;line-height:1.6;">
+          Questions? Email us at
+          <a href="mailto:{{ support_email }}" style="color:#4f46e5;text-decoration:none;">
+            {{ support_email }}
+          </a>
+        </p>
+      </td>
+    </tr>
+
+    <!-- FOOTER -->
+    <tr>
+      <td style="background:#f8fafc;border-top:1px solid #e5e7eb;padding:24px 48px;text-align:center;">
+        <p style="margin:0 0 6px;color:#6b7280;font-size:13px;">
+          — The <strong>{{ site_name }}</strong> Team
+        </p>
+        <p style="margin:0;font-size:11px;color:#9ca3af;">
+          You're receiving this because you signed up for our referral program.
+        </p>
+        <a href="{{ site_url }}" style="display:block;margin-top:8px;color:#4f46e5;font-size:12px;text-decoration:none;">
+          {{ site_url }}
+        </a>
+      </td>
+    </tr>
+
+  </table>
+  </td></tr>
+</table>
+</body>
+</html>

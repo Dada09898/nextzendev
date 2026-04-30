@@ -1,0 +1,77 @@
+{% extends 'website/base.html' %}
+{% block title %}Referral Program — {{ site_settings.site_name }}{% endblock %}
+
+{% block content %}
+<section class="py-20 bg-gray-50 min-h-screen">
+  <div class="max-w-2xl mx-auto px-4">
+
+    <div class="text-center mb-10">
+      <h1 class="text-4xl font-bold text-gray-900 mb-3">🤝 Refer & Earn</h1>
+      <p class="text-gray-500 text-lg">Refer a friend and earn rewards when they sign up!</p>
+    </div>
+
+    {% if success %}
+    <div class="bg-green-50 border border-green-200 rounded-2xl p-8 text-center shadow">
+      <div class="text-5xl mb-4">📧</div>
+      <h2 class="text-2xl font-bold text-green-700 mb-2">Check Your Email!</h2>
+      <p class="text-gray-600 mb-4">Your referral link has been sent to your email address. Share it with friends who need IT solutions!</p>
+      <div class="bg-white border border-green-200 rounded-xl px-6 py-4 text-sm text-gray-500">
+        <p class="mb-1">📩 <strong>Link sent to your email</strong></p>
+        <p class="text-xs text-gray-400">Didn't receive it? Check your spam folder or contact us.</p>
+      </div>
+      <div class="mt-6 bg-indigo-50 border border-indigo-200 rounded-xl px-6 py-4 text-sm text-indigo-700">
+        🎁 <strong>How it works:</strong> When your referred friend signs up and places a project, our team will review and approve your reward. You'll receive a coupon code directly on your email!
+      </div>
+    </div>
+
+    {% else %}
+    <div class="bg-white rounded-2xl shadow-md p-8">
+      <h2 class="text-xl font-bold text-gray-800 mb-6">Get Your Referral Link</h2>
+      <form method="POST" class="space-y-4">
+        {% csrf_token %}
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Your Name *</label>
+          <input type="text" name="name" required placeholder="Rahul Sharma"
+            class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
+          <input type="email" name="email" required placeholder="rahul@example.com"
+            class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+          <input type="tel" name="phone" placeholder="+91 99999 99999"
+            class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+        </div>
+        <button type="submit"
+          class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition">
+          🔗 Get My Referral Link
+        </button>
+      </form>
+    </div>
+
+    <div class="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+      <div class="bg-white rounded-xl p-5 shadow-sm">
+        <div class="text-3xl mb-2">📤</div>
+        <h3 class="font-semibold text-gray-800">Share Your Link</h3>
+        <p class="text-xs text-gray-500 mt-1">Share with friends who need our services</p>
+      </div>
+      <div class="bg-white rounded-xl p-5 shadow-sm">
+        <div class="text-3xl mb-2">✅</div>
+        <h3 class="font-semibold text-gray-800">They Sign Up</h3>
+        <p class="text-xs text-gray-500 mt-1">Friend places an order using your link</p>
+      </div>
+      <div class="bg-white rounded-xl p-5 shadow-sm">
+        <div class="text-3xl mb-2">🎁</div>
+        <h3 class="font-semibold text-gray-800">You Earn Rewards</h3>
+        <p class="text-xs text-gray-500 mt-1">Get rewarded for every successful referral</p>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+
+
+{% endblock %}

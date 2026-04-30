@@ -1,0 +1,52 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Page Unavailable</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      background: #f8fafc;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: #1e293b;
+      padding: 2rem;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      padding: 3rem;
+      max-width: 460px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    }
+    .icon { font-size: 3.5rem; margin-bottom: 1.25rem; }
+    h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.75rem; color: #0f172a; }
+    p  { color: #64748b; line-height: 1.65; margin-bottom: 1.75rem; }
+    a.btn {
+      display: inline-block;
+      background: #7c3aed;
+      color: #fff;
+      padding: 0.7rem 2rem;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    a.btn:hover { background: #6d28d9; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">🚧</div>
+    <h1>This page is currently unavailable</h1>
+    <p>We've temporarily taken this page offline. Please check back soon or return to the homepage.</p>
+    <a class="btn" href="/">← Back to Home</a>
+  </div>
+</body>
+</html>

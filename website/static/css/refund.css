@@ -1,0 +1,69 @@
+/* ─── REFUND / LEGAL PAGES ───────────────────────────── */
+
+.refund-section {
+    padding: 100px 0;
+    display: flex;
+    justify-content: center;
+    background: var(--bg);
+}
+
+.refund-box {
+    max-width: 860px;
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 64px;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+.refund-box::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent);
+}
+
+.refund-title {
+    font-size: 2.4rem;
+    margin-bottom: 32px;
+    color: var(--ink);
+}
+
+.refund-content {
+    font-size: 15.5px;
+    color: var(--ink-2);
+    line-height: 1.9;
+}
+
+.refund-content h2 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-top: 32px;
+    margin-bottom: 10px;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.refund-content h2::before {
+    content: '';
+    width: 4px; height: 16px;
+    background: var(--accent);
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.refund-content p { margin-bottom: 14px; }
+.refund-content ul { margin-left: 20px; margin-bottom: 18px; }
+.refund-content li { margin-bottom: 7px; }
+
+@media (max-width: 768px) {
+    .refund-box { padding: 32px 24px; }
+    .refund-title { font-size: 1.9rem; }
+}

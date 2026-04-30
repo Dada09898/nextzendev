@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Referral Converted! — {{ site_name }}</title>
+</head>
+<body style="margin:0;padding:0;background:#f0fdf4;font-family:'Segoe UI',Arial,sans-serif;">
+
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;padding:40px 0;">
+  <tr><td align="center">
+  <table width="600" cellpadding="0" cellspacing="0"
+         style="max-width:600px;width:100%;border-radius:16px;overflow:hidden;
+                box-shadow:0 4px 24px rgba(22,163,74,.15);">
+
+    <!-- HEADER — Green celebration -->
+    <tr>
+      <td style="background:linear-gradient(135deg,#16a34a 0%,#059669 100%);
+                  padding:44px 48px 36px;text-align:center;">
+        <div style="font-size:56px;margin-bottom:14px;">🎉</div>
+        <h1 style="margin:0;color:#fff;font-size:28px;font-weight:700;letter-spacing:-.3px;">
+          Congratulations!
+        </h1>
+        <p style="margin:10px 0 0;color:#bbf7d0;font-size:16px;">
+          Your Referral has been Successfully Converted!
+        </p>
+      </td>
+    </tr>
+
+    <!-- BODY -->
+    <tr>
+      <td style="background:#ffffff;padding:40px 48px;">
+
+        <p style="margin:0 0 20px;color:#374151;font-size:16px;line-height:1.6;">
+          Hi <strong style="color:#111827;">{{ name }}</strong> 🎊
+        </p>
+        <p style="margin:0 0 28px;color:#6b7280;font-size:15px;line-height:1.6;">
+          Great news! <strong style="color:#111827;">{{ referred_name }}</strong> signed up
+          using your referral link and has placed a project with us. Your referral
+          has been successfully converted!
+        </p>
+
+        <!-- SUCCESS BANNER -->
+        <table width="100%" cellpadding="0" cellspacing="0"
+               style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);
+                       border:2px solid #86efac;border-radius:12px;margin-bottom:24px;">
+          <tr>
+            <td style="padding:24px;text-align:center;">
+              <div style="font-size:36px;margin-bottom:8px;">✅</div>
+              <p style="margin:0;color:#15803d;font-size:18px;font-weight:700;">
+                Referral Link Converted!
+              </p>
+              <p style="margin:6px 0 0;color:#166534;font-size:14px;">
+                Code: <strong style="font-family:monospace;background:#bbf7d0;
+                               padding:2px 8px;border-radius:4px;">
+                  {{ referral_code }}
+                </strong>
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        <!-- COMMISSION BOX -->
+        {% if commission_amount and commission_amount > 0 %}
+        <table width="100%" cellpadding="0" cellspacing="0"
+               style="background:#fafafa;border:2px solid #e5e7eb;border-radius:12px;margin-bottom:24px;">
+          <tr>
+            <td style="padding:24px;">
+              <p style="margin:0 0 16px;color:#111827;font-weight:700;font-size:15px;
+                          border-bottom:1px solid #e5e7eb;padding-bottom:12px;">
+                💰 Your Commission Details
+              </p>
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr style="background:#f9fafb;">
+                  <td style="padding:12px 16px;color:#6b7280;font-size:13px;
+                              border-radius:6px 0 0 6px;width:50%;">
+                    Your Commission Amount
+                  </td>
+                  <td style="padding:12px 16px;font-weight:700;font-size:22px;
+                              color:#15803d;text-align:right;border-radius:0 6px 6px 0;">
+                    ₹{{ commission_amount }}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px;color:#6b7280;font-size:13px;">
+                    Reward
+                  </td>
+                  <td style="padding:12px 16px;color:#374151;font-size:14px;
+                              font-weight:600;text-align:right;">
+                    {{ reward_description }}
+                  </td>
+                </tr>
+                <tr style="background:#f9fafb;">
+                  <td style="padding:12px 16px;color:#6b7280;font-size:13px;border-radius:6px 0 0 6px;">
+                    Status
+                  </td>
+                  <td style="padding:12px 16px;text-align:right;border-radius:0 6px 6px 0;">
+                    <span style="background:#fef9c3;color:#854d0e;font-size:12px;
+                                  font-weight:600;padding:4px 12px;border-radius:20px;">
+                      ⏳ Pending Admin Approval
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+        {% else %}
+        <!-- Commission not set yet -->
+        <table width="100%" cellpadding="0" cellspacing="0"
+               style="background:#f0fdf4;border:1px solid #86efac;border-radius:12px;margin-bottom:24px;">
+          <tr>
+            <td style="padding:20px 24px;">
+              <p style="margin:0 0 6px;color:#15803d;font-weight:700;font-size:15px;">
+                🎁 &nbsp;Your Reward
+              </p>
+              <p style="margin:0;color:#166534;font-size:15px;font-weight:600;">
+                {{ reward_description }}
+              </p>
+            </td>
+          </tr>
+        </table>
+        {% endif %}
+
+        <!-- WHAT HAPPENS NEXT -->
+        <table width="100%" cellpadding="0" cellspacing="0"
+               style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;margin-bottom:32px;">
+          <tr>
+            <td style="padding:20px 24px;">
+              <p style="margin:0 0 12px;color:#1d4ed8;font-weight:700;font-size:14px;">
+                📋 &nbsp;What Happens Next?
+              </p>
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="padding:6px 0;vertical-align:top;width:24px;">
+                    <span style="background:#3b82f6;color:#fff;font-size:10px;
+                                  font-weight:700;padding:2px 6px;border-radius:10px;">1</span>
+                  </td>
+                  <td style="padding:6px 0 6px 10px;color:#1e40af;font-size:13px;">
+                    Our team will review your referral conversion
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0;vertical-align:top;width:24px;">
+                    <span style="background:#3b82f6;color:#fff;font-size:10px;
+                                  font-weight:700;padding:2px 6px;border-radius:10px;">2</span>
+                  </td>
+                  <td style="padding:6px 0 6px 10px;color:#1e40af;font-size:13px;">
+                    Your commission/reward will be approved within 2-3 business days
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0;vertical-align:top;width:24px;">
+                    <span style="background:#3b82f6;color:#fff;font-size:10px;
+                                  font-weight:700;padding:2px 6px;border-radius:10px;">3</span>
+                  </td>
+                  <td style="padding:6px 0 6px 10px;color:#1e40af;font-size:13px;">
+                    You will receive a confirmation email once reward is processed
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+
+        <p style="margin:0;color:#9ca3af;font-size:13px;line-height:1.6;">
+          Questions about your reward? Contact us at
+          <a href="mailto:{{ support_email }}" style="color:#16a34a;text-decoration:none;font-weight:600;">
+            {{ support_email }}
+          </a>
+        </p>
+      </td>
+    </tr>
+
+    <!-- FOOTER -->
+    <tr>
+      <td style="background:#f8fafc;border-top:1px solid #e5e7eb;padding:24px 48px;text-align:center;">
+        <p style="margin:0 0 6px;color:#6b7280;font-size:13px;">
+          — The <strong>{{ site_name }}</strong> Team
+        </p>
+        <p style="margin:0;font-size:11px;color:#9ca3af;">
+          Thank you for being part of our referral program!
+        </p>
+        <a href="{{ site_url }}" style="display:block;margin-top:8px;color:#16a34a;font-size:12px;text-decoration:none;">
+          {{ site_url }}
+        </a>
+      </td>
+    </tr>
+
+  </table>
+  </td></tr>
+</table>
+</body>
+</html>

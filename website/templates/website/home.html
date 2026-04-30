@@ -1,0 +1,1212 @@
+{% extends 'website/base.html' %}
+{% load static %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<!-- HERO -->
+<section class="hero">
+    <!-- Animated background canvas -->
+    <canvas id="hero-canvas" class="hero-canvas"></canvas>
+
+    <!-- Ambient orbs -->
+    <div class="hero-orb hero-orb-1"></div>
+    <div class="hero-orb hero-orb-2"></div>
+    <div class="hero-orb hero-orb-3"></div>
+
+    <div class="container hero-content">
+
+        <div class="hero-left">
+
+            <!-- Eyebrow -->
+            <div class="hero-eyebrow-wrap">
+                <span class="hero-eyebrow-dot"></span>
+                <span class="hero-eyebrow-text">
+                    {% if hero %}{{ hero.eyebrow|default:"Enterprise IT Solutions · Noida" }}{% else %}Enterprise IT Solutions · Noida{% endif %}
+                </span>
+            </div>
+
+            <!-- Headline with typewriter -->
+            <h1 class="hero-headline" id="hero-headline">
+                {% if hero %}
+                    {# |safe is intentional — heading allows <em>/<br> for styling; admin-only field #}
+                    {{ hero.heading|safe }}
+                {% else %}
+                    Engineering software that <em>scales</em> the businesses<br>the world depends on.
+                {% endif %}
+            </h1>
+
+            <p class="hero-lead">
+                {% if hero %}
+                    {{ hero.subheading }}
+                {% else %}
+                    We partner with growth-stage and Fortune 1000 teams to architect, build, and operate cloud-native platforms — from product strategy through 24/7 production support.
+                {% endif %}
+            </p>
+
+            <!-- Buttons -->
+            <div class="hero-cta-row">
+                {% if hero and hero.button1_text %}
+                    {# Django auto-escapes javascript: in href — safe. Admin should use /path or https:// URLs only #}
+                    <a href="{{ hero.button1_link|default:'/contact' }}" class="btn-hero-primary">
+                        {{ hero.button1_text }}
+                        <span class="btn-hero-arrow">
+                            <svg width="14" height="14" viewBox="0 0 14 14"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </span>
+                    </a>
+                {% else %}
+                    <a href="/contact" class="btn-hero-primary">
+                        Start a project
+                        <span class="btn-hero-arrow">
+                            <svg width="14" height="14" viewBox="0 0 14 14"><path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </span>
+                    </a>
+                {% endif %}
+
+                {% if hero and hero.button2_text %}
+                    <a href="{{ hero.button2_link|default:'/appointment/' }}" class="btn-hero-consult">
+                        <span class="btn-consult-pulse"></span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        {{ hero.button2_text }}
+                        <span class="btn-consult-badge">Free</span>
+                    </a>
+                {% else %}
+                    <a href="/appointment/" class="btn-hero-consult">
+                        <span class="btn-consult-pulse"></span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        Book Free Consultation
+                        <span class="btn-consult-badge">Free</span>
+                    </a>
+                {% endif %}
+            </div>
+
+            <!-- Social proof tags -->
+            <div class="hero-proof">
+                <div class="proof-item">
+                    {% if hero and hero.meta1 %}{{ hero.meta1 }}{% else %}150+ platforms shipped{% endif %}
+                </div>
+                <div class="proof-sep"></div>
+                <div class="proof-item">
+                    {% if hero and hero.meta2 %}{{ hero.meta2 }}{% else %}ISO 27001 aligned{% endif %}
+                </div>
+                <div class="proof-sep"></div>
+                <div class="proof-item">
+                    {% if hero and hero.meta3 %}{{ hero.meta3 }}{% else %}4.9 / 5 client rating{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Hero visual: Dashboard mockup -->
+        <div class="hero-right" id="hero-right">
+            {% if hero and hero.image %}
+                <img src="{{ hero.image.url }}" alt="{{ hero.heading }}" class="hero-img">
+            {% else %}
+            <div class="hero-dashboard" id="hero-dashboard">
+                <!-- Browser chrome -->
+                <div class="dash-chrome">
+                    <div class="dash-dots">
+                        <span class="d-dot d-red"></span>
+                        <span class="d-dot d-yellow"></span>
+                        <span class="d-dot d-green"></span>
+                    </div>
+                    <span class="dash-url-bar">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        app.nextzendev.com / dashboard
+                    </span>
+                    <div class="dash-chrome-right">
+                        <span class="dash-status-dot"></span>
+                    </div>
+                </div>
+
+                <!-- Uptime pill -->
+                <div class="dash-uptime">
+                    <div class="uptime-pulse">
+                        <span class="uptime-ring"></span>
+                        <span class="uptime-core"></span>
+                    </div>
+                    <span class="uptime-label">UPTIME</span>
+                    <span class="dash-uptime-val">99.99%</span>
+                    <span class="dash-uptime-badge">Live</span>
+                </div>
+
+                <!-- KPI grid -->
+                <div class="dash-kpis">
+                    <div class="dash-kpi dash-kpi-dark">
+                        <div class="kpi-header">
+                            <span class="kpi-label">Revenue</span>
+                            <span class="kpi-badge">+18.2%</span>
+                        </div>
+                        <div class="kpi-value">$2.84M</div>
+                        <div class="dash-sparkline">
+                            <svg viewBox="0 0 120 40" preserveAspectRatio="none">
+                                <defs>
+                                    <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="rgba(26,184,122,0.5)"/>
+                                        <stop offset="100%" stop-color="rgba(26,184,122,0)"/>
+                                    </linearGradient>
+                                </defs>
+                                <polyline class="spark-line" points="0,35 20,28 35,30 50,18 65,20 80,9 95,6 120,3" fill="none" stroke="#1ab87a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <polygon points="0,35 20,28 35,30 50,18 65,20 80,9 95,6 120,3 120,40 0,40" fill="url(#sg)"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="dash-kpi-col">
+                        <div class="dash-kpi dash-kpi-light">
+                            <div class="kpi-label-light">Active Users</div>
+                            <div class="kpi-value-sm" id="kpi-users">12,408</div>
+                        </div>
+                        <div class="dash-kpi dash-kpi-light">
+                            <div class="kpi-label-light">API P95</div>
+                            <div class="kpi-value-sm kpi-fast">42 <span>ms</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Deploy log -->
+                <div class="dash-log">
+                    <div class="dash-log-title">Deployments — last 24h</div>
+                    <div class="dash-log-row">
+                        <span class="log-dot log-success"></span>
+                        <span class="log-hash">8a5f1d2</span>
+                        <span class="log-msg">feat(billing): add seat-based pricing</span>
+                        <span class="log-branch">main → prod</span>
+                    </div>
+                    <div class="dash-log-row">
+                        <span class="log-dot log-pending"></span>
+                        <span class="log-hash">f1809c7</span>
+                        <span class="log-msg">perf(api): cache invoice lookups</span>
+                    </div>
+                    <div class="dash-log-row">
+                        <span class="log-dot log-pending"></span>
+                        <span class="log-hash">4621d90</span>
+                        <span class="log-msg">fix(auth): rotate refresh tokens on reuse</span>
+                    </div>
+                </div>
+
+                <!-- Footer status bar -->
+                <div class="dash-statusbar">
+                    <div class="dash-build">
+                        <span class="build-dot"></span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        Build passing
+                    </div>
+                    <div class="dash-soc2-badge">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        SOC 2 · Type II
+                    </div>
+                </div>
+
+                <!-- Floating badge -->
+                <div class="dash-float-badge">
+                    <div class="float-icon">🚀</div>
+                    <div>
+                        <div class="float-title">Deployed to prod</div>
+                        <div class="float-sub">2 mins ago · 0 errors</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <!-- Scroll cue -->
+    <div class="hero-scroll-cue">
+        <span>Scroll</span>
+        <div class="scroll-bar"><div class="scroll-thumb"></div></div>
+    </div>
+</section>
+
+<!-- STATS STRIP -->
+<div class="stats-strip">
+    <div class="container">
+        <div class="stats-grid">
+            {% if stats %}
+                {% for stat in stats %}
+                <div class="stat-item">
+                    <div class="stat-number" data-count="{{ stat.value }}">{{ stat.value }}<sup>{{ stat.suffix }}</sup></div>
+                    <div class="stat-label">{{ stat.label }}</div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="stat-item">
+                <div class="stat-number">150<sup>+</sup></div>
+                <div class="stat-label">Platforms shipped</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">12<sup>yr</sup></div>
+                <div class="stat-label">Engineering experience</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">40<sup>+</sup></div>
+                <div class="stat-label">Enterprise clients</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">99.99<sup>%</sup></div>
+                <div class="stat-label">Platform uptime</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- APPOINTMENT BANNER — moved up, right after stats for immediate visibility -->
+<section class="appt-banner-section">
+    <div class="container">
+        <div class="appt-banner">
+            <!-- Left: text content -->
+            <div class="appt-banner-left">
+                <div class="appt-banner-eyebrow">
+                    <span class="appt-live-dot"></span>
+                    Free Consultation — No Obligation
+                </div>
+                <h2 class="appt-banner-title">
+                    Talk to a Senior Engineer<br>
+                    <em>this week.</em>
+                </h2>
+                <p class="appt-banner-sub">
+                    Skip the sales funnel. Book a focused 30-minute call — we'll review your architecture,
+                    stack, or roadmap and give you an honest engineering perspective.
+                </p>
+
+                <!-- Trust signals -->
+                <div class="appt-trust-row">
+                    <div class="appt-trust-item">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        No spam, ever
+                    </div>
+                    <div class="appt-trust-item">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        Usually within 24 hrs
+                    </div>
+                    <div class="appt-trust-item">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        Zoom · Meet · Phone · In person
+                    </div>
+                </div>
+
+                <a href="/appointment/" class="appt-banner-cta">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    Book My Free Consultation
+                </a>
+            </div>
+
+            <!-- Right: mini booking card -->
+            <div class="appt-banner-right">
+                <div class="appt-mini-card">
+                    <div class="appt-mini-header">
+                        <div class="appt-mini-avatar">NZ</div>
+                        <div>
+                            <div class="appt-mini-name">NextZen Engineering</div>
+                            <div class="appt-mini-role">Senior Tech Consultation</div>
+                        </div>
+                        <span class="appt-mini-badge">Free</span>
+                    </div>
+
+                    <div class="appt-mini-slots">
+                        <div class="appt-slot-label">Available this week</div>
+                        <div class="appt-slots-row">
+                            <span class="appt-slot">Mon 10:00</span>
+                            <span class="appt-slot">Tue 14:00</span>
+                            <span class="appt-slot appt-slot-hot">Wed 11:00</span>
+                            <span class="appt-slot">Thu 15:00</span>
+                            <span class="appt-slot">Fri 10:30</span>
+                            <span class="appt-slot">Sat 11:00</span>
+                        </div>
+                    </div>
+
+                    <div class="appt-mini-meta">
+                        <div class="appt-meta-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            30 minutes
+                        </div>
+                        <div class="appt-meta-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10a19.79 19.79 0 01-3.07-8.67A2 2 0 012 1.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                            Video · Phone · In-person
+                        </div>
+                    </div>
+
+                    <a href="/appointment/" class="appt-mini-btn">
+                        Schedule Now →
+                    </a>
+
+                    <div class="appt-mini-footer">
+                        🔒 Confirmation email sent instantly
+                    </div>
+                </div>
+
+                <!-- Floating notification -->
+                <div class="appt-float-notif">
+                    <span class="appt-float-icon">📧</span>
+                    <div>
+                        <div class="appt-float-name">Rohit K. just booked</div>
+                        <div class="appt-float-time">2 mins ago · Cloud Architecture call</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- TRUSTED BY -->
+<section class="trusted">
+    <div class="container">
+        <div class="trusted-label">Trusted by enterprise teams shipping mission-critical software</div>
+        <div class="trust-scroll-wrap">
+            <div class="trust-grid">
+                {% for client in trusted_clients %}
+                <div class="trust-card">
+                    {% if client.logo %}
+                        <img src="{{ client.logo.url }}" alt="{{ client.name }}">
+                    {% else %}
+                        <span>{{ client.name }}</span>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <div class="trust-card"><span>Northwind Capital</span></div>
+                <div class="trust-card"><span>Helix Health</span></div>
+                <div class="trust-card"><span>Aurora Logistics</span></div>
+                <div class="trust-card"><span>Sigma Robotics</span></div>
+                <div class="trust-card"><span>Verde Energy</span></div>
+                <div class="trust-card"><span>Quanta Insurance</span></div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- PROCESS / HOW WE WORK -->
+<section class="process page-section">
+    <div class="container">
+        <div class="section-header">
+            <span class="eyebrow">How we work</span>
+            <h2>A delivery model designed around <em>enterprise</em> reality.</h2>
+        </div>
+
+        <div class="process-grid">
+            {% for step in process_steps %}
+            <div class="step-card reveal">
+                <div class="step-number-bg">0{{ step.step_number }}</div>
+                <div class="step-icon-wrap">{{ step.icon }}</div>
+                <h3>{{ step.title }}</h3>
+                <p>{{ step.description }}</p>
+            </div>
+            {% empty %}
+            <div class="step-card reveal">
+                <div class="step-number-bg">01</div>
+                <div class="step-icon-wrap">🔍</div>
+                <h3>Discover</h3>
+                <p>Stakeholder workshops, technical due diligence, and a written discovery brief that aligns business goals with engineering reality.</p>
+            </div>
+            <div class="step-card reveal">
+                <div class="step-number-bg">02</div>
+                <div class="step-icon-wrap">📐</div>
+                <h3>Architect</h3>
+                <p>System design, data models, integration map, and a phased delivery plan reviewed against your security and compliance posture.</p>
+            </div>
+            <div class="step-card reveal">
+                <div class="step-number-bg">03</div>
+                <div class="step-icon-wrap">⚡</div>
+                <h3>Build</h3>
+                <p>Two-week sprints with demos, instrumented code reviews, and a staging environment that mirrors production from day one.</p>
+            </div>
+            <div class="step-card reveal">
+                <div class="step-number-bg">04</div>
+                <div class="step-icon-wrap">🚀</div>
+                <h3>Launch & evolve</h3>
+                <p>Phased rollout, on-call SLAs, observability dashboards, and a quarterly roadmap to compound the wins after go-live.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- WHY CHOOSE US -->
+<section class="why-choose page-section">
+    <div class="container">
+        <div class="section-header">
+            <span class="eyebrow">Why teams choose us</span>
+            <h2>Built for the standards your <em>CTO</em> already lives by.</h2>
+        </div>
+
+        <div class="why-grid">
+            {% for item in why_choose %}
+            <div class="why-card reveal">
+                <div class="why-icon-wrap">{{ item.icon }}</div>
+                <h3>{{ item.title }}</h3>
+                <p>{{ item.description }}</p>
+            </div>
+            {% empty %}
+            <div class="why-card reveal">
+                <div class="why-icon-wrap">☁️</div>
+                <h3>Cloud-native architecture</h3>
+                <p>Multi-region deployments on AWS, GCP, and Azure with infrastructure as code, autoscaling, and zero-downtime releases.</p>
+            </div>
+            <div class="why-card reveal">
+                <div class="why-icon-wrap">🛡️</div>
+                <h3>Security-first engineering</h3>
+                <p>OWASP-aligned reviews, SSO, encryption at rest and in transit, and audit-ready controls for SOC 2 and ISO 27001.</p>
+            </div>
+            <div class="why-card reveal">
+                <div class="why-icon-wrap">🎨</div>
+                <h3>Composable design systems</h3>
+                <p>Tokenized UI libraries that scale across web, mobile, and embedded surfaces — owned by your team after handoff.</p>
+            </div>
+            <div class="why-card reveal">
+                <div class="why-icon-wrap">👥</div>
+                <h3>Dedicated product squads</h3>
+                <p>Senior engineers, designers, and a delivery lead working as one team — embedded with your stakeholders end-to-end.</p>
+            </div>
+            <div class="why-card reveal">
+                <div class="why-icon-wrap">📊</div>
+                <h3>DevOps &amp; observability</h3>
+                <p>Pipelines, SLOs, distributed tracing, and on-call rotations that surface issues before your customers do.</p>
+            </div>
+            <div class="why-card reveal">
+                <div class="why-icon-wrap">🤝</div>
+                <h3>Long-term partnership</h3>
+                <p>We stay past go-live with managed support, quarterly roadmaps, and a single accountable engineering partner.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- SERVICES -->
+<section class="services page-section">
+    <div class="container">
+        <div class="services-header">
+            <div>
+                <span class="eyebrow">Services</span>
+                <h2>A full-stack engineering bench, on call as <em>your team</em>.</h2>
+            </div>
+            <p class="services-sub">Engage us as a complete product squad or as targeted experts plugged into your existing stack and ceremonies.</p>
+        </div>
+
+        <div class="services-grid">
+            {% for s in services %}
+            <article class="service-card-home reveal">
+                <div class="service-icon-wrap">{{ s.icon }}</div>
+                <h3>{{ s.title }}</h3>
+                <p>{{ s.description }}</p>
+                <a href="/services" class="service-link">Learn more →</a>
+            </article>
+            {% empty %}
+            <article class="service-card-home reveal">
+                <div class="service-icon-wrap">🌐</div>
+                <h3>Custom web platforms</h3>
+                <p>Marketing sites, customer portals, and operational consoles built on React, Next.js, and TypeScript with measurable performance budgets.</p>
+                <a href="/services" class="service-link">Learn more →</a>
+            </article>
+            <article class="service-card-home reveal">
+                <div class="service-icon-wrap">📱</div>
+                <h3>Mobile apps — iOS &amp; Android</h3>
+                <p>React Native and native Swift / Kotlin builds with offline-first sync, push, and in-app purchases — shipped to both app stores.</p>
+                <a href="/services" class="service-link">Learn more →</a>
+            </article>
+            <article class="service-card-home reveal">
+                <div class="service-icon-wrap">☁️</div>
+                <h3>Cloud &amp; DevOps</h3>
+                <p>AWS, GCP, and Azure landing zones, Terraform IaC, container orchestration, and cost-optimized observability stacks.</p>
+                <a href="/services" class="service-link">Learn more →</a>
+            </article>
+            <article class="service-card-home reveal">
+                <div class="service-icon-wrap">🤖</div>
+                <h3>AI &amp; data engineering</h3>
+                <p>RAG pipelines, model evaluation, vector stores, and ETL into your warehouse — wired into the products your team already uses.</p>
+                <a href="/services" class="service-link">Learn more →</a>
+            </article>
+            <article class="service-card-home reveal">
+                <div class="service-icon-wrap">🎯</div>
+                <h3>Product design systems</h3>
+                <p>Tokenized component libraries, accessibility audits, and Figma-to-code workflows that keep product, design, and engineering in sync.</p>
+                <a href="/services" class="service-link">Learn more →</a>
+            </article>
+            <article class="service-card-home reveal">
+                <div class="service-icon-wrap">🔗</div>
+                <h3>Enterprise integrations &amp; APIs</h3>
+                <p>Salesforce, NetSuite, Workday, Snowflake, and bespoke legacy systems — connected through resilient, well-versioned APIs.</p>
+                <a href="/services" class="service-link">Learn more →</a>
+            </article>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- PORTFOLIO -->
+<section class="portfolio-home page-section">
+    <div class="container">
+        <div class="section-header">
+            <span class="eyebrow">Selected work</span>
+            <h2>Platforms that <em>moved</em> the needle.</h2>
+            <p>A curated selection from real work delivered for growth-stage and enterprise clients.</p>
+        </div>
+
+        <div class="portfolio-grid">
+            {% for p in portfolio %}
+            <article class="portfolio-card reveal">
+                {% if p.image %}<img src="{{ p.image.url }}" alt="{{ p.title }}">{% endif %}
+                <div class="overlay">
+                    <div class="overlay-inner">
+                        <h3>{{ p.title }}</h3>
+                        <p>{{ p.description }}</p>
+                    </div>
+                </div>
+            </article>
+            {% empty %}
+            <article class="portfolio-card reveal">
+                <img src="https://images.unsplash.com/photo-1460925895917-adf4e565db8d?w=700&q=80" alt="Analytics Platform">
+                <div class="overlay"><div class="overlay-inner"><h3>Analytics Platform</h3><p>Revenue intelligence for Fortune 500 finance team</p></div></div>
+            </article>
+            <article class="portfolio-card reveal">
+                <img src="https://images.unsplash.com/photo-1556740738-b6a63e27c4df?w=700&q=80" alt="E-commerce Suite">
+                <div class="overlay"><div class="overlay-inner"><h3>E-commerce Suite</h3><p>Headless commerce with 3× conversion improvement</p></div></div>
+            </article>
+            <article class="portfolio-card reveal">
+                <img src="https://images.unsplash.com/photo-1561070791-2526d30994b5?w=700&q=80" alt="Patient Portal">
+                <div class="overlay"><div class="overlay-inner"><h3>Patient Portal</h3><p>HIPAA-cleared in 9 months, ahead of schedule</p></div></div>
+            </article>
+            {% endfor %}
+        </div>
+
+        <div class="portfolio-see-more">
+            <a href="/portfolio" class="btn-outline">View all case studies <span>→</span></a>
+        </div>
+    </div>
+</section>
+
+<!-- TESTIMONIALS (dark section) -->
+<section class="testimonials">
+    <div class="container">
+        <div class="section-header">
+            <span class="eyebrow eyebrow-light">Client outcomes</span>
+            <h2 class="text-white">Trusted by the leaders <em class="em-light">accountable</em> for the result.</h2>
+        </div>
+
+        <div class="testimonial-grid">
+            {% for testimonial in testimonials %}
+            <article class="testimonial-card reveal">
+                <div class="quote-mark">"</div>
+                <p class="feedback">{{ testimonial.feedback }}</p>
+                <div class="testimonial-hero">
+                    <div class="testimonial-avatar">
+                        {% if testimonial.image %}
+                            <img src="{{ testimonial.image.url }}" alt="{{ testimonial.client_name }}">
+                        {% else %}
+                            {{ testimonial.client_name|slice:":1" }}
+                        {% endif %}
+                    </div>
+                    <div class="testimonial-info">
+                        <h3>{{ testimonial.client_name }}</h3>
+                        <p>{{ testimonial.role }}</p>
+                    </div>
+                </div>
+            </article>
+            {% empty %}
+            <article class="testimonial-card reveal">
+                <div class="quote-mark">"</div>
+                <p class="feedback">NextZenDev rebuilt our patient portal in nine months. We launched ahead of schedule, cleared HIPAA review on the first pass, and cut average page load by 71%.</p>
+                <div class="testimonial-hero">
+                    <div class="testimonial-avatar">S</div>
+                    <div class="testimonial-info"><h3>Sara Whitfield</h3><p>VP Engineering, Helix Health</p></div>
+                </div>
+            </article>
+            <article class="testimonial-card reveal">
+                <div class="quote-mark">"</div>
+                <p class="feedback">They architected our investor analytics platform from a one-page sketch. The team operates like senior in-house engineers — only faster, and with better written specs.</p>
+                <div class="testimonial-hero">
+                    <div class="testimonial-avatar">M</div>
+                    <div class="testimonial-info"><h3>Marcus Chen</h3><p>CTO, Northwind Capital</p></div>
+                </div>
+            </article>
+            <article class="testimonial-card reveal">
+                <div class="quote-mark">"</div>
+                <p class="feedback">From discovery to live operations in two quarters. The squad understood our integrations with SAP and the WMS within the first sprint and never broke stride.</p>
+                <div class="testimonial-hero">
+                    <div class="testimonial-avatar">E</div>
+                    <div class="testimonial-info"><h3>Elena Rodriguez</h3><p>Head of Product, Aurora Logistics</p></div>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<style>
+/* ═══════════════════════════════════════════
+   APPOINTMENT BANNER
+═══════════════════════════════════════════ */
+.appt-banner-section {
+    padding: 80px 0;
+    background: linear-gradient(160deg, #0d1117 0%, #0f1923 50%, #0d1117 100%);
+    position: relative;
+    overflow: hidden;
+}
+.appt-banner-section::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 60% 50% at 80% 50%, rgba(26,184,122,0.07) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 60% at 10% 30%, rgba(99,102,241,0.06) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+.appt-banner {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    gap: 64px;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+/* Left */
+.appt-banner-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(26,184,122,0.1);
+    border: 1px solid rgba(26,184,122,0.25);
+    color: #1ab87a;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border-radius: 999px;
+    margin-bottom: 20px;
+}
+.appt-live-dot {
+    width: 7px; height: 7px;
+    background: #1ab87a;
+    border-radius: 50%;
+    animation: appt-pulse 1.6s ease-in-out infinite;
+}
+@keyframes appt-pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(26,184,122,.6); }
+    50%      { box-shadow: 0 0 0 6px rgba(26,184,122,0); }
+}
+
+.appt-banner-title {
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 800;
+    color: #f1f5f9;
+    line-height: 1.18;
+    letter-spacing: -.03em;
+    margin: 0 0 16px;
+}
+.appt-banner-title em {
+    font-style: italic;
+    color: #1ab87a;
+}
+.appt-banner-sub {
+    color: #94a3b8;
+    font-size: 16px;
+    line-height: 1.7;
+    max-width: 520px;
+    margin: 0 0 28px;
+}
+
+.appt-trust-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin-bottom: 32px;
+}
+.appt-trust-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 500;
+}
+.appt-trust-item svg { color: #1ab87a; flex-shrink: 0; }
+
+.appt-banner-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: #1ab87a;
+    color: #0d1117;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 14px 28px;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: background .2s, transform .2s, box-shadow .2s;
+    box-shadow: 0 4px 20px rgba(26,184,122,.3);
+}
+.appt-banner-cta:hover {
+    background: #0fa36a;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(26,184,122,.4);
+}
+
+/* Right — mini booking card */
+.appt-banner-right {
+    position: relative;
+}
+.appt-mini-card {
+    background: #141c25;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 18px;
+    padding: 28px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.5);
+}
+
+.appt-mini-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.appt-mini-avatar {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, #1ab87a, #0ea5e9);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 13px; color: #fff;
+    flex-shrink: 0;
+}
+.appt-mini-name { color: #f1f5f9; font-weight: 700; font-size: 14px; }
+.appt-mini-role { color: #64748b; font-size: 12px; margin-top: 2px; }
+.appt-mini-badge {
+    margin-left: auto;
+    background: rgba(26,184,122,.12);
+    color: #1ab87a;
+    font-size: 11px; font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(26,184,122,.3);
+}
+
+.appt-slot-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #475569;
+    margin-bottom: 12px;
+}
+.appt-slots-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 22px;
+}
+.appt-slot {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all .15s;
+}
+.appt-slot:hover { border-color: #1ab87a; color: #1ab87a; }
+.appt-slot-hot {
+    background: rgba(26,184,122,.1);
+    border-color: rgba(26,184,122,.4);
+    color: #1ab87a;
+}
+
+.appt-mini-meta {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+.appt-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #64748b;
+    font-size: 12px;
+}
+.appt-meta-item svg { color: #475569; }
+
+.appt-mini-btn {
+    display: block;
+    width: 100%;
+    text-align: center;
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 13px 0;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: opacity .2s, transform .2s;
+    box-shadow: 0 4px 16px rgba(99,102,241,.3);
+}
+.appt-mini-btn:hover { opacity: .9; transform: translateY(-1px); }
+
+.appt-mini-footer {
+    text-align: center;
+    color: #475569;
+    font-size: 12px;
+    margin-top: 12px;
+}
+
+/* Floating notification */
+.appt-float-notif {
+    position: absolute;
+    bottom: -20px;
+    left: -28px;
+    background: #1e2a38;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.4);
+    animation: appt-notif-float 3s ease-in-out infinite;
+}
+@keyframes appt-notif-float {
+    0%,100% { transform: translateY(0); }
+    50%      { transform: translateY(-5px); }
+}
+.appt-float-icon { font-size: 20px; }
+.appt-float-name { color: #e2e8f0; font-size: 12px; font-weight: 600; }
+.appt-float-time { color: #64748b; font-size: 11px; margin-top: 2px; }
+
+/* Responsive */
+@media (max-width: 900px) {
+    .appt-banner {
+        grid-template-columns: 1fr;
+        gap: 48px;
+    }
+    .appt-banner-right { max-width: 420px; }
+    .appt-float-notif { display: none; }
+}
+@media (max-width: 480px) {
+    .appt-banner-section { padding: 60px 0; }
+    .appt-trust-row { gap: 12px; }
+    .appt-mini-meta { flex-direction: column; gap: 8px; }
+}
+</style>
+
+<style>
+/* ═══════════════════════════════════════════
+   HERO — Free Consultation Button (prominent)
+═══════════════════════════════════════════ */
+.btn-hero-consult {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    background: rgba(26,184,122,0.10);
+    border: 1.5px solid rgba(26,184,122,0.55);
+    color: #1ab87a;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 13px 24px;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: background .22s, border-color .22s, transform .22s, box-shadow .22s;
+    box-shadow: 0 0 20px rgba(26,184,122,0.12);
+    overflow: hidden;
+}
+.btn-hero-consult:hover {
+    background: rgba(26,184,122,0.18);
+    border-color: #1ab87a;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 28px rgba(26,184,122,0.28);
+}
+.btn-hero-consult svg {
+    flex-shrink: 0;
+}
+.btn-consult-badge {
+    margin-left: 4px;
+    background: #1ab87a;
+    color: #0d1117;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+/* Pulsing ring behind the button */
+.btn-consult-pulse {
+    position: absolute;
+    inset: -1px;
+    border-radius: 10px;
+    border: 1.5px solid rgba(26,184,122,0.4);
+    animation: consult-ring 2.4s ease-in-out infinite;
+    pointer-events: none;
+}
+@keyframes consult-ring {
+    0%,100% { opacity:1; transform: scale(1); }
+    60%      { opacity:0; transform: scale(1.06); }
+}
+</style>
+
+
+
+<!-- NEWSLETTER -->
+<section class="newsletter-section">
+    <div class="container newsletter-inner">
+        <div class="newsletter-left">
+            <div class="newsletter-tag">The Engineering Brief</div>
+            <h3>Monthly insights from our engineering team — no fluff.</h3>
+        </div>
+        <div class="newsletter-right">
+            <div class="newsletter-form">
+                <input type="email" placeholder="you@company.com" id="newsletter-email">
+                <button onclick="subscribeNewsletter()">Subscribe →</button>
+            </div>
+            <p class="newsletter-note" id="newsletter-msg"></p>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block js %}
+<script>
+/* ═══════════════════════════════════════════════
+   HERO CANVAS — network/particle animation
+═══════════════════════════════════════════════ */
+(function() {
+    const canvas = document.getElementById('hero-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let W, H, nodes = [], animId;
+    const COUNT = 55;
+    const CONNECT_DIST = 130;
+    const ACCENT = '26,184,122';
+
+    function resize() {
+        W = canvas.width  = canvas.offsetWidth;
+        H = canvas.height = canvas.offsetHeight;
+    }
+
+    function Node() {
+        this.x  = Math.random() * W;
+        this.y  = Math.random() * H;
+        this.vx = (Math.random() - 0.5) * 0.35;
+        this.vy = (Math.random() - 0.5) * 0.35;
+        this.r  = Math.random() * 1.8 + 0.5;
+        this.a  = Math.random();
+    }
+
+    Node.prototype.update = function() {
+        this.x += this.vx;
+        this.y += this.vy;
+        if (this.x < 0 || this.x > W) this.vx *= -1;
+        if (this.y < 0 || this.y > H) this.vy *= -1;
+    };
+
+    function init() {
+        nodes = [];
+        for (let i = 0; i < COUNT; i++) nodes.push(new Node());
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, W, H);
+        // draw connections
+        for (let i = 0; i < nodes.length; i++) {
+            for (let j = i + 1; j < nodes.length; j++) {
+                const dx = nodes[i].x - nodes[j].x;
+                const dy = nodes[i].y - nodes[j].y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < CONNECT_DIST) {
+                    const alpha = (1 - dist / CONNECT_DIST) * 0.15;
+                    ctx.beginPath();
+                    ctx.moveTo(nodes[i].x, nodes[i].y);
+                    ctx.lineTo(nodes[j].x, nodes[j].y);
+                    ctx.strokeStyle = `rgba(${ACCENT},${alpha})`;
+                    ctx.lineWidth = 0.8;
+                    ctx.stroke();
+                }
+            }
+        }
+        // draw nodes
+        nodes.forEach(n => {
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(${ACCENT},${n.a * 0.4})`;
+            ctx.fill();
+            n.update();
+        });
+        animId = requestAnimationFrame(draw);
+    }
+
+    function start() {
+        resize();
+        init();
+        draw();
+    }
+
+    window.addEventListener('resize', () => {
+        cancelAnimationFrame(animId);
+        resize();
+        draw();
+    });
+
+    // Only run on desktop for performance
+    if (window.innerWidth > 768) start();
+})();
+
+/* ═══════════════════════════════════════════════
+   HERO HEADLINE — animated word-by-word reveal
+═══════════════════════════════════════════════ */
+(function() {
+    const el = document.getElementById('hero-headline');
+    if (!el) return;
+
+    // Preserve existing HTML (with <em>, <br> etc.) and wrap words
+    const raw = el.innerHTML;
+    const tmp = document.createElement('div');
+    tmp.innerHTML = raw;
+
+    let delay = 0;
+    const DELAY = 60; // ms per word
+
+    function wrapWords(node, parent) {
+        if (node.nodeType === Node.TEXT_NODE) {
+            const parts = node.textContent.split(/(\s+)/);
+            parts.forEach(part => {
+                if (/^\s+$/.test(part)) {
+                    parent.appendChild(document.createTextNode(part));
+                } else if (part) {
+                    const span = document.createElement('span');
+                    span.className = 'h-word';
+                    span.style.animationDelay = delay + 'ms';
+                    span.textContent = part;
+                    delay += DELAY;
+                    parent.appendChild(span);
+                }
+            });
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+            const tag = node.tagName.toLowerCase();
+            const clone = document.createElement(tag);
+            Array.from(node.attributes).forEach(a => clone.setAttribute(a.name, a.value));
+            node.childNodes.forEach(c => wrapWords(c, clone));
+            parent.appendChild(clone);
+        }
+    }
+
+    el.innerHTML = '';
+    tmp.childNodes.forEach(c => wrapWords(c, el));
+    el.classList.add('hero-headline-animated');
+})();
+
+/* ═══════════════════════════════════════════════
+   HERO RIGHT — 3D tilt on mouse move
+═══════════════════════════════════════════════ */
+(function() {
+    const dash = document.getElementById('hero-dashboard');
+    if (!dash || window.innerWidth < 768) return;
+
+    document.addEventListener('mousemove', (e) => {
+        const rect = dash.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const dx = (e.clientX - cx) / (window.innerWidth / 2);
+        const dy = (e.clientY - cy) / (window.innerHeight / 2);
+        dash.style.transform = `perspective(900px) rotateY(${dx * 6}deg) rotateX(${-dy * 5}deg) translateY(-4px)`;
+    });
+
+    document.addEventListener('mouseleave', () => {
+        dash.style.transform = 'perspective(900px) rotateY(0) rotateX(0) translateY(0)';
+    });
+})();
+
+/* ═══════════════════════════════════════════════
+   KPI COUNTER — live tick animation
+═══════════════════════════════════════════════ */
+(function() {
+    const el = document.getElementById('kpi-users');
+    if (!el) return;
+    let base = 12408;
+    setInterval(() => {
+        base += Math.floor(Math.random() * 3) - 1;
+        el.textContent = base.toLocaleString();
+    }, 2800);
+})();
+
+/* ═══════════════════════════════════════════════
+   SCROLL REVEAL
+═══════════════════════════════════════════════ */
+const revealEls = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+        if (e.isIntersecting) {
+            e.target.classList.add('revealed');
+            io.unobserve(e.target);
+        }
+    });
+}, { threshold: 0.1 });
+revealEls.forEach(el => io.observe(el));
+
+/* ═══════════════════════════════════════════════
+   NEWSLETTER
+═══════════════════════════════════════════════ */
+function subscribeNewsletter() {
+    const email = document.getElementById('newsletter-email').value.trim();
+    const msg   = document.getElementById('newsletter-msg');
+    const btn   = document.querySelector('.newsletter-form button');
+
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+        msg.textContent = 'Please enter a valid email address.';
+        msg.style.color = '#e74c3c';
+        return;
+    }
+
+    btn.disabled    = true;
+    btn.textContent = 'Subscribing…';
+    msg.textContent = '';
+
+    const fd = new FormData();
+    fd.append('email', email);
+    fd.append('csrfmiddlewaretoken', getCsrfToken());
+
+    fetch('/newsletter/subscribe/', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            msg.textContent = data.message;
+            msg.style.color = 'var(--accent)';
+            document.getElementById('newsletter-email').value = '';
+            btn.textContent = 'Subscribed ✓';
+        } else {
+            msg.textContent = data.error || 'Something went wrong.';
+            msg.style.color = '#e74c3c';
+            btn.disabled    = false;
+            btn.textContent = 'Subscribe →';
+        }
+    })
+    .catch(() => {
+        msg.textContent = 'Network error. Please try again.';
+        msg.style.color = '#e74c3c';
+        btn.disabled    = false;
+        btn.textContent = 'Subscribe →';
+    });
+}
+
+function getCsrfToken() {
+    const name    = 'csrftoken';
+    const cookies = document.cookie.split(';');
+    for (let c of cookies) {
+        c = c.trim();
+        if (c.startsWith(name + '=')) return decodeURIComponent(c.slice(name.length + 1));
+    }
+    return '';
+}
+document.addEventListener('DOMContentLoaded', function() {
+    const inp = document.getElementById('newsletter-email');
+    if (inp) inp.addEventListener('keydown', e => { if (e.key === 'Enter') subscribeNewsletter(); });
+});
+</script>
+{% endblock %}

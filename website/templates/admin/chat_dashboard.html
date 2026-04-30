@@ -1,0 +1,403 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content_title %}<h2>💬 Live Chat Dashboard</h2>{% endblock %}
+
+{% block content %}
+<style>
+* { box-sizing: border-box; }
+
+.dashboard-wrap {
+    display: flex;
+    height: 78vh;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    font-family: sans-serif;
+    margin-top: 10px;
+}
+
+/* ── LEFT sidebar ── */
+.sidebar {
+    width: 28%;
+    border-right: 1px solid #ddd;
+    overflow-y: auto;
+    background: #fafafa;
+    flex-shrink: 0;
+}
+
+.sidebar-header {
+    padding: 12px 16px;
+    background: #417690;
+    color: #fff;
+    font-size: 13px;
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+}
+
+.session-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.session-item:hover { background: #e8f0fe; }
+.session-item.active { background: #d0e8ff; border-left: 3px solid #417690; }
+.session-item.ended  { opacity: 0.6; }
+
+.session-item .s-name  { font-size: 14px; font-weight: bold; color: #222; }
+.session-item .s-meta  { font-size: 11px; color: #888; margin-top: 2px; }
+
+/* ── RIGHT chat area ── */
+.chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    min-width: 0;
+}
+
+.chat-top {
+    padding: 12px 16px;
+    background: #417690;
+    color: #fff;
+    font-size: 14px;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+#chat-box {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: #f9f9f9;
+}
+
+.no-session-msg {
+    margin: auto;
+    color: #aaa;
+    font-size: 14px;
+}
+
+/* Bubbles */
+.msg {
+    max-width: 65%;
+    padding: 9px 14px;
+    border-radius: 14px;
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+.msg.user  { align-self: flex-end;   background: #DCF8C6; color: #111; }
+.msg.bot   { align-self: flex-start; background: #F1F0F0; color: #333; }
+.msg.admin { align-self: flex-start; background: #D0E8FF; color: #003; font-weight: 600; }
+
+.msg-label {
+    font-size: 10px;
+    color: #aaa;
+    margin-bottom: 2px;
+}
+.msg-label.right { text-align: right; }
+
+/* ── Reply bar ── */
+.reply-bar {
+    display: flex;
+    padding: 10px 12px;
+    border-top: 1px solid #ddd;
+    gap: 8px;
+    flex-shrink: 0;
+    background: #fff;
+}
+
+.reply-bar input {
+    flex: 1;
+    padding: 9px 13px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 13px;
+    outline: none;
+}
+
+.reply-bar input:focus { border-color: #417690; }
+
+.reply-bar button {
+    padding: 9px 20px;
+    background: #417690;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.reply-bar button:hover { background: #2e5269; }
+.reply-bar button:disabled { background: #aaa; cursor: not-allowed; }
+</style>
+
+<div class="dashboard-wrap">
+
+    <!-- LEFT: User list -->
+    <div class="sidebar">
+        <div class="sidebar-header">Conversations ({{ sessions|length }})</div>
+
+        {% for s in sessions %}
+            <div class="session-item {% if s.is_ended %}ended{% endif %}" id="si-{{ s.session_id }}"
+                 onclick="loadChat('{{ s.session_id }}', this)">
+                <div class="s-name">
+                    {{ s.name|default:"Unknown User" }}
+                    {% if s.is_ended %}
+                        <span style="font-size:10px;background:#fee2e2;color:#ef4444;padding:1px 6px;border-radius:10px;font-weight:600;margin-left:4px;">ENDED</span>
+                    {% else %}
+                        <span style="font-size:10px;background:#d1fae5;color:#10b981;padding:1px 6px;border-radius:10px;font-weight:600;margin-left:4px;">ACTIVE</span>
+                    {% endif %}
+                </div>
+                <div class="s-meta">📱 {{ s.mobile|default:"—" }}</div>
+                <div class="s-meta">📧 {{ s.email|default:"—" }}</div>
+            </div>
+        {% empty %}
+            <p style="padding:16px;color:#888;font-size:13px;">No conversations yet.</p>
+        {% endfor %}
+    </div>
+
+    <!-- RIGHT: Chat -->
+    <div class="chat-area">
+        <div class="chat-top" id="chat-title" style="display:flex;justify-content:space-between;align-items:center;">
+            <span id="chat-title-text">Select a conversation →</span>
+            <button id="end-conv-btn" onclick="endConversation()"
+                style="display:none;background:rgba(239,68,68,0.2);color:#fca5a5;border:1px solid rgba(239,68,68,0.4);
+                       padding:5px 14px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">
+                🔴 End Conversation
+            </button>
+        </div>
+
+        <div id="chat-box">
+            <div class="no-session-msg">← Click a user on the left to view their chat</div>
+        </div>
+
+        <!-- Ended banner -->
+        <div id="ended-banner" style="display:none;background:#fef2f2;border-top:2px solid #ef4444;
+             padding:10px 16px;text-align:center;flex-shrink:0;">
+            <span style="color:#ef4444;font-weight:700;font-size:13px;">🔴 This conversation has been ended</span>
+        </div>
+
+        <div class="reply-bar" id="reply-bar">
+            <input type="text" id="reply-input"
+                   placeholder="Type your reply and press Enter..."
+                   onkeydown="if(event.key==='Enter') sendReply()"
+                   disabled>
+            <button id="send-btn" onclick="sendReply()" disabled>Send ➤</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+let currentSession = null;
+let pollTimer      = null;
+let lastCount      = 0;
+let currentEnded   = false;
+
+/* ── CSRF ── */
+function getCookie(name) {
+    let v = null;
+    if (document.cookie) {
+        document.cookie.split(';').forEach(c => {
+            let p = c.trim();
+            if (p.startsWith(name + '='))
+                v = decodeURIComponent(p.substring(name.length + 1));
+        });
+    }
+    return v;
+}
+
+/* ── Mark chat UI as ended ── */
+function markEnded() {
+    currentEnded = true;
+    document.getElementById('end-conv-btn').style.display   = 'none';
+    document.getElementById('ended-banner').style.display   = 'block';
+    document.getElementById('reply-bar').style.display      = 'none';
+    document.getElementById('chat-title-text').style.color  = '#fca5a5';
+    // Also mark sidebar item
+    const item = document.querySelector('.session-item.active');
+    if (item) {
+        item.classList.add('ended');
+        const badge = item.querySelector('span[style]');
+        if (badge) {
+            badge.style.background = '#fee2e2';
+            badge.style.color      = '#ef4444';
+            badge.textContent      = 'ENDED';
+        }
+    }
+    // Stop polling
+    clearInterval(pollTimer);
+    pollTimer = null;
+}
+
+/* ── End conversation ── */
+function endConversation() {
+    if (!currentSession || currentEnded) return;
+    if (!confirm('End this conversation? The customer will be notified.')) return;
+
+    const btn = document.getElementById('end-conv-btn');
+    btn.disabled    = true;
+    btn.textContent = 'Ending…';
+
+    fetch('/chatbot/end/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: 'session_id=' + encodeURIComponent(currentSession) + '&ended_by=admin'
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'ended' || data.status === 'already_ended') {
+            fetchChat(true);   // refresh to show system message
+            markEnded();
+        } else {
+            alert('Error ending conversation.');
+            btn.disabled    = false;
+            btn.textContent = '🔴 End Conversation';
+        }
+    })
+    .catch(() => {
+        alert('Network error. Please try again.');
+        btn.disabled    = false;
+        btn.textContent = '🔴 End Conversation';
+    });
+}
+
+/* ── Load chat for a session ── */
+function loadChat(sessionId, el) {
+    document.querySelectorAll('.session-item').forEach(i => i.classList.remove('active'));
+    if (el) el.classList.add('active');
+
+    currentSession = sessionId;
+    currentEnded   = false;
+    lastCount      = 0;
+
+    // Reset UI state
+    const name = el ? el.querySelector('.s-name').textContent.trim() : sessionId;
+    document.getElementById('chat-title-text').textContent = '💬 ' + name;
+    document.getElementById('chat-title-text').style.color = '';
+    document.getElementById('ended-banner').style.display  = 'none';
+    document.getElementById('reply-bar').style.display     = 'flex';
+    document.getElementById('end-conv-btn').style.display  = 'none';
+    document.getElementById('reply-input').disabled        = false;
+    document.getElementById('send-btn').disabled           = false;
+    document.getElementById('reply-input').value           = '';
+    document.getElementById('reply-input').placeholder     = 'Type your reply and press Enter...';
+    document.getElementById('reply-input').focus();
+
+    fetchChat(true);
+
+    clearInterval(pollTimer);
+    pollTimer = setInterval(function(){ fetchChat(false); }, 3000);
+}
+
+/* ── Fetch messages from server ── */
+function fetchChat(force) {
+    if (!currentSession) return;
+
+    fetch('/chatbot/fetch/?session_id=' + encodeURIComponent(currentSession))
+    .then(r => r.json())
+    .then(data => {
+        // Handle ended state detected from server
+        if (data.is_ended && !currentEnded) {
+            if (data.messages.length !== lastCount || force) {
+                renderMessages(data.messages);
+            }
+            markEnded();
+            return;
+        }
+
+        if (!force && data.messages.length === lastCount) return;
+
+        lastCount = data.messages.length;
+        renderMessages(data.messages);
+
+        // Show End button only for active conversations
+        if (!data.is_ended) {
+            document.getElementById('end-conv-btn').style.display = 'inline-block';
+        }
+    })
+    .catch(function(){});
+}
+
+/* ── Render messages ── */
+function renderMessages(messages) {
+    const box = document.getElementById('chat-box');
+    box.innerHTML = '';
+
+    if (messages.length === 0) {
+        box.innerHTML = '<div class="no-session-msg">No messages yet.</div>';
+        return;
+    }
+
+    messages.forEach(m => {
+        const labelDiv = document.createElement('div');
+        labelDiv.className = 'msg-label' + (m.sender === 'user' ? ' right' : '');
+        labelDiv.textContent = m.sender === 'user'   ? '👤 User'
+                             : m.sender === 'admin'  ? '🛡 Admin'
+                             : m.sender === 'system' ? '⚙️ System'
+                             : '🤖 Bot';
+        box.appendChild(labelDiv);
+
+        const div = document.createElement('div');
+        div.className   = 'msg ' + m.sender;
+        div.textContent = m.message;
+        box.appendChild(div);
+    });
+
+    box.scrollTop = box.scrollHeight;
+    lastCount = messages.length;
+}
+
+/* ── Send admin reply ── */
+function sendReply() {
+    if (currentEnded) return;
+    const input = document.getElementById('reply-input');
+    const btn   = document.getElementById('send-btn');
+    const msg   = input.value.trim();
+    if (!msg || !currentSession) return;
+
+    btn.disabled    = true;
+    btn.textContent = 'Sending...';
+
+    fetch('/chatbot/admin-reply/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: 'session_id=' + encodeURIComponent(currentSession)
+            + '&message='    + encodeURIComponent(msg)
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.disabled    = false;
+        btn.textContent = 'Send ➤';
+        if (data.status === 'ok') {
+            input.value = '';
+            fetchChat(true);
+        } else {
+            alert('Error: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(function() {
+        btn.disabled    = false;
+        btn.textContent = 'Send ➤';
+        alert('Network error. Please try again.');
+    });
+}
+</script>
+
+{% endblock %}

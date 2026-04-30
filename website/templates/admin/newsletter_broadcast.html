@@ -1,0 +1,36 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<div style="max-width:600px;">
+  <h2>📧 Send Broadcast Email</h2>
+  <p style="color:#666;">Sending to <strong>{{ subscribers|length }}</strong> active subscriber(s).</p>
+
+  <ul style="color:#555;font-size:13px;margin-bottom:20px;">
+    {% for s in subscribers %}<li>{{ s.email }}</li>{% endfor %}
+  </ul>
+
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="ids" value="{{ ids }}">
+
+    <div style="margin-bottom:16px;">
+      <label style="display:block;font-weight:600;margin-bottom:6px;">Subject *</label>
+      <input type="text" name="subject" required
+        style="width:100%;padding:10px 14px;border:1px solid #ccc;border-radius:6px;font-size:14px;">
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <label style="display:block;font-weight:600;margin-bottom:6px;">Message Body *</label>
+      <p style="color:#888;font-size:12px;margin:0 0 6px;">Plain text. Each subscriber receives it individually.</p>
+      <textarea name="body" required rows="10"
+        style="width:100%;padding:10px 14px;border:1px solid #ccc;border-radius:6px;font-size:14px;font-family:inherit;"></textarea>
+    </div>
+
+    <button type="submit"
+      style="background:#1ab87a;color:#fff;padding:10px 24px;border:none;border-radius:6px;font-size:15px;font-weight:600;cursor:pointer;">
+      📧 Send to {{ subscribers|length }} Subscriber(s)
+    </button>
+    <a href="{% url 'admin:website_newslettersubscriber_changelist' %}"
+      style="margin-left:16px;color:#666;font-size:14px;">Cancel</a>
+  </form>
+</div>
+{% endblock %}

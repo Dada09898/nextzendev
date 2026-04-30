@@ -1,0 +1,34 @@
+{% extends 'website/base.html' %}
+{% block title %}{{ category.name }} — Blog — {{ site_settings.site_name }}{% endblock %}
+
+{% block content %}
+<section class="py-16 bg-gray-50 min-h-screen">
+  <div class="max-w-7xl mx-auto px-4">
+    <div class="text-center mb-10">
+      <h1 class="text-4xl font-bold text-gray-900 mb-3">📁 {{ category.name }}</h1>
+      <p class="text-gray-500">All posts in this category</p>
+      <a href="/blog/" class="text-indigo-500 hover:underline text-sm mt-2 inline-block">← Back to All Posts</a>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for post in posts %}
+      <a href="/blog/{{ post.slug }}/" class="bg-white rounded-2xl shadow hover:shadow-lg transition overflow-hidden flex flex-col group">
+        {% if post.cover_image %}
+        <img src="{{ post.cover_image.url }}" alt="{{ post.title }}" class="w-full h-44 object-cover" />
+        {% else %}
+        <div class="w-full h-44 bg-indigo-50 flex items-center justify-center text-4xl">✍️</div>
+        {% endif %}
+        <div class="p-5">
+          <h2 class="text-gray-900 font-bold text-base mb-2 group-hover:text-indigo-600 transition">{{ post.title }}</h2>
+          <p class="text-gray-400 text-sm">{{ post.published_at|date:"d M Y" }}</p>
+        </div>
+      </a>
+      {% empty %}
+      <div class="col-span-3 text-center py-20 text-gray-400">
+        <div class="text-5xl mb-4">📭</div>
+        <p>No posts in this category yet.</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}
