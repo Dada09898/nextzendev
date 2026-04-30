@@ -4,18 +4,28 @@ Django settings for config project.
 
 from pathlib import Path
 import os
+import dj_database_url
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load .env file
+# Load .env file (local dev only — Render pe env vars directly inject hote hain)
 load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 
-DEBUG = os.getenv("DEBUG", "True") == "True"
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+# ══════════════════════════════════════════════════════════════════
+# ALLOWED HOSTS — single source of truth
+# ══════════════════════════════════════════════════════════════════
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    'localhost',
+    'nextzendev.in',
+    'www.nextzendev.in',
+    'nextzendev.onrender.com',
+]
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -209,8 +219,8 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.middleware.security.SecurityMiddleware',
+    'django.middleware.security.SecurityMiddleware',  # ← MUST be first
+    'whitenoise.middleware.WhiteNoiseMiddleware',     # ← right after Security
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -242,10 +252,11 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=os.getenv('DATABASE_URL', f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
+        conn_max_age=600,
+        ssl_require=not DEBUG,
+    )
 }
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -259,33 +270,31 @@ LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Kolkata'
 SITE_URL = os.getenv('SITE_URL', 'https://nextzendev.in')
 
-# ── Security Headers (auto-enabled in production) ────────────────────
+# ── Security Headers (production only) ───────────────────────────
 if not DEBUG:
-   allowed_hosts = os.getenv(
-        'ALLOWED_HOSTS',
-        'nextzendev.in','com','nextzendev.in','nextzendev.onrender.com'
-    )
-   ALLOWED_HOSTS = [host.strip() for host in allowed_hosts.split(',')]
-   SECURE_SSL_REDIRECT         = True
-   SECURE_HSTS_SECONDS         = 31536000   # 1 year
-   SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-   SECURE_HSTS_PRELOAD         = True
-   SECURE_BROWSER_XSS_FILTER   = True
-   SECURE_CONTENT_TYPE_NOSNIFF = True
-   X_FRAME_OPTIONS             = 'DENY'
-   SESSION_COOKIE_SECURE       = True
-   CSRF_COOKIE_SECURE          = True
-   SESSION_COOKIE_HTTPONLY     = True
-   CSRF_COOKIE_HTTPONLY        = True
+    SECURE_SSL_REDIRECT             = True
+    SECURE_HSTS_SECONDS             = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS  = True
+    SECURE_HSTS_PRELOAD             = True
+    SECURE_BROWSER_XSS_FILTER       = True
+    SECURE_CONTENT_TYPE_NOSNIFF     = True
+    X_FRAME_OPTIONS                 = 'DENY'
+    SESSION_COOKIE_SECURE           = True
+    CSRF_COOKIE_SECURE              = True
+    SESSION_COOKIE_HTTPONLY         = True
+    CSRF_COOKIE_HTTPONLY            = True
+
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = 'static/'
+# ── Static & Media ────────────────────────────────────────────────
+STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / "website" / "static"]
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-ALLOWED_HOSTS = ['nextzendev.in', 'www.nextzendev.in', 'nextzendev.onrender.com']
 RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
 RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
 SITE_NAME = 'NextZen IT Solutions'
@@ -326,8 +335,5 @@ LOGGING = {
         },
     },
 }
-
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
