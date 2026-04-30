@@ -27,6 +27,12 @@ ALLOWED_HOSTS = [
     'nextzendev.onrender.com',
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://nextzendev.in',
+    'https://www.nextzendev.in',
+    'https://nextzendev.onrender.com',
+]
+
 
 # ══════════════════════════════════════════════════════════════════
 # JAZZMIN SETTINGS — Admin panel sections & icons
