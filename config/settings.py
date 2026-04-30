@@ -251,13 +251,22 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=os.getenv('DATABASE_URL', f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
-        conn_max_age=600,
-        ssl_require=not DEBUG,
-    )
-}
+_db_url = os.getenv('DATABASE_URL')
+
+if _db_url:
+    DATABASES = {
+        'default': dj_database_url.parse(
+            _db_url,
+            conn_max_age=600,
+        )
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -300,16 +309,13 @@ RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
 SITE_NAME = 'NextZen IT Solutions'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-
-EMAIL_HOST = 'smtp-relay.brevo.com'   # ✅ ADD THIS
-
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp-relay.brevo.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
-
-DEFAULT_FROM_EMAIL = 'NextZen IT Solutions <connect@nextzendev.in>'
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'NextZen IT Solutions <connect@nextzendev.in>')
+EMAIL_TIMEOUT = 10  # 10 sec baad timeout — server hang nahi karega
 
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN  = os.getenv("TWILIO_AUTH_TOKEN")
