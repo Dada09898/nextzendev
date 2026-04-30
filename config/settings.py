@@ -285,7 +285,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / "website" / "static"]
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-
+ALLOWED_HOSTS = ['nextzendev.in', 'www.nextzendev.in', 'nextzendev.onrender.com']
 RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
 RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
 SITE_NAME = 'NextZen IT Solutions'
