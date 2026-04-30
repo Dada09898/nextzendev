@@ -261,18 +261,22 @@ SITE_URL = os.getenv('SITE_URL', 'https://nextzendev.in')
 
 # ── Security Headers (auto-enabled in production) ────────────────────
 if not DEBUG:
-    ALLOWED_HOSTS               = os.getenv('ALLOWED_HOSTS', "nextzendev.in,www.nextzendev.in,nextzendev.onrender.com").split(',')
-    SECURE_SSL_REDIRECT         = True
-    SECURE_HSTS_SECONDS         = 31536000   # 1 year
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD         = True
-    SECURE_BROWSER_XSS_FILTER   = True
-    SECURE_CONTENT_TYPE_NOSNIFF = True
-    X_FRAME_OPTIONS             = 'DENY'
-    SESSION_COOKIE_SECURE       = True
-    CSRF_COOKIE_SECURE          = True
-    SESSION_COOKIE_HTTPONLY     = True
-    CSRF_COOKIE_HTTPONLY        = True
+   allowed_hosts = os.getenv(
+        'ALLOWED_HOSTS',
+        'nextzendev.in','com','nextzendev.in','nextzendev.onrender.com'
+    )
+   ALLOWED_HOSTS = [host.strip() for host in allowed_hosts.split(',')]
+   SECURE_SSL_REDIRECT         = True
+   SECURE_HSTS_SECONDS         = 31536000   # 1 year
+   SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+   SECURE_HSTS_PRELOAD         = True
+   SECURE_BROWSER_XSS_FILTER   = True
+   SECURE_CONTENT_TYPE_NOSNIFF = True
+   X_FRAME_OPTIONS             = 'DENY'
+   SESSION_COOKIE_SECURE       = True
+   CSRF_COOKIE_SECURE          = True
+   SESSION_COOKIE_HTTPONLY     = True
+   CSRF_COOKIE_HTTPONLY        = True
 USE_I18N = True
 USE_TZ = True
 
