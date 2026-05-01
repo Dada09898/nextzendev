@@ -67,7 +67,23 @@ urlpatterns = [
     path('blog/tag/<slug:slug>/',         views.blog_by_tag,      name='blog_tag'),
     
     # ── Invoice Download ──────────────────────────────────────────
-     path('invoice/<str:invoice_number>/download/', views.download_invoice, name='download_invoice')
+    path('invoice/<str:invoice_number>/download/', views.download_invoice, name='download_invoice')
 
-     
+
+]
+
+
+# urlpatterns list mein ye add karo:
+
+from . import views
+
+urlpatterns = [
+    # ... existing URLs ...
+    
+    # Invoice URLs
+    path('invoice/<str:invoice_number>/', views.view_invoice, name='view_invoice'),
+    path('invoice/<str:invoice_number>/download/', views.download_invoice, name='download_invoice'),
+    path('payment-invoice/<str:invoice_number>/', views.view_payment_invoice, name='view_payment_invoice'),
+    
+    # ... rest of URLs ...
 ]

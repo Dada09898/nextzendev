@@ -2384,3 +2384,58 @@ def download_invoice(request, invoice_number):
         filename         = f'{invoice.invoice_number}.pdf',
     )
     return response
+
+
+
+# ══════════════════════════════════════════════════════════════════
+# INVOICE VIEW ADDITIONS
+# ══════════════════════════════════════════════════════════════════
+# Ye code apne views.py ke end mein add karo (download_invoice function ke baad)
+
+from django.shortcuts import render, get_object_or_404
+from django.http import FileResponse
+from .models import Invoice, PaymentOrder
+from django.conf import settings
+
+
+def view_invoice(request, invoice_number):
+    """
+    Display invoice in browser with beautiful HTML template.
+    Used for: viewing invoice before download, email previews.
+    """
+    invoice = get_object_or_404(Invoice, invoice_number=invoice_number)
+    
+    # Calculate if invoice is overdue
+    from django.utils import timezone
+    is_overdue = False
+    days_overdue = 0
+    
+    if invoice.status in ['sent', 'overdue'] and invoice.due_date:
+        today = timezone.now().date()
+        if invoice.due_date < today:
+            is_overdue = True
+            days_overdue = (today - invoice.due_date).days
+    
+    return render(request, 'website/email_invoice.html', {
+        'invoice': invoice,
+        'is_overdue': is_overdue,
+        'days_overdue': days_overdue,
+        'site_name': getattr(settings, 'SITE_NAME', 'NextZenDev'),
+        'support_email': getattr(settings, 'SUPPORT_EMAIL', invoice.from_email),
+        'site_url': getattr(settings, 'SITE_URL', 'https://nextzendev.in'),
+    })
+
+
+def view_payment_invoice(request, invoice_number):
+    """
+    Display payment confirmation invoice (after successful payment).
+    Shows PAID stamp and payment details.
+    """
+    payment = get_object_or_404(PaymentOrder, invoice_number=invoice_number)
+    
+    return render(request, 'website/email_invoice.html', {
+        'payment': payment,
+        'site_name': getattr(settings, 'SITE_NAME', 'NextZenDev'),
+        'support_email': getattr(settings, 'SUPPORT_EMAIL', settings.DEFAULT_FROM_EMAIL),
+        'site_url': getattr(settings, 'SITE_URL', 'https://nextzendev.in'),
+    })
