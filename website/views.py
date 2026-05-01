@@ -208,14 +208,17 @@ def contact(request):
             message=request.POST.get('message', ''),
         )
 
-        # Send confirmation email to user
+        # Common variables (used by both user + admin email)
         user_email = request.POST.get('email', '').strip()
         user_name  = request.POST.get('name', '').strip()
         user_msg   = request.POST.get('message', '').strip()
+
+        # ── User ko confirmation email ────────────────────────────────────
         if user_email:
             try:
                 from django.template.loader import render_to_string
-                _ss = get_site_settings()
+                from django.core.mail import EmailMultiAlternatives as _EMA
+                _ss            = get_site_settings()
                 _support_email = (_ss.email if _ss and _ss.email else settings.DEFAULT_FROM_EMAIL)
                 html = render_to_string('website/email_contact_confirm.html', {
                     'name':          user_name,
@@ -224,18 +227,58 @@ def contact(request):
                     'site_url':      getattr(settings, 'SITE_URL', ''),
                     'support_email': _support_email,
                 })
-                from django.core.mail import EmailMessage as _EmailMessage
-                mail = _EmailMessage(
-                    subject=f"We received your message — {settings.SITE_NAME}",
-                    body=html,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    to=[user_email],
+                plain = (
+                    f"Hi {user_name},\n\n"
+                    f"Thanks for contacting {settings.SITE_NAME}! "
+                    f"We've received your message and will get back to you within 24 hours.\n\n"
+                    f"Your message:\n{user_msg}\n\n"
+                    f"Regards,\n{settings.SITE_NAME}"
                 )
-                mail.content_subtype = 'html'
+                mail = _EMA(
+                    subject    = f"We received your message — {settings.SITE_NAME}",
+                    body       = plain,
+                    from_email = settings.DEFAULT_FROM_EMAIL,
+                    to         = [user_email],
+                )
+                mail.attach_alternative(html, 'text/html')
                 mail.send(fail_silently=True)
+                logger.info(f"[Contact] ✅ Confirmation email sent to {user_email}")
             except Exception as e:
-                logger.error(f"[Contact] Confirmation email failed for {user_email}: {e}")
+                logger.error(f"[Contact] ❌ Confirmation email failed for {user_email}: {e}")
 
+        # ── Admin ko notification email ───────────────────────────────────
+        # NOTE: 8 spaces — outside if user_email, runs always
+        try:
+            from django.core.mail import EmailMultiAlternatives as _EMA_adm
+            _gs           = get_gs()
+            _admin_emails = _gs.get_admin_notification_emails()
+            _ss           = get_site_settings()
+            _admin_url    = getattr(settings, 'SITE_URL', '').rstrip('/') + '/admin/'
+
+            plain_admin = (
+                f"New Contact Form Submission!\n\n"
+                f"Name    : {user_name}\n"
+                f"Email   : {user_email}\n"
+                f"Phone   : {request.POST.get('phone', '').strip()}\n"
+                f"Service : {request.POST.get('service', '').strip()}\n"
+                f"Budget  : {request.POST.get('budget', '').strip()}\n"
+                f"Timeline: {request.POST.get('timeline', '').strip()}\n\n"
+                f"Message :\n{user_msg}\n\n"
+                f"View in Admin: {_admin_url}"
+            )
+            for _ae in _admin_emails:
+                _msg_adm = _EMA_adm(
+                    subject    = f'📩 New Contact — {user_name} | {settings.SITE_NAME}',
+                    body       = plain_admin,
+                    from_email = settings.DEFAULT_FROM_EMAIL,
+                    to         = [_ae],
+                )
+                _msg_adm.send(fail_silently=True)
+            logger.info(f"[Contact] ✅ Admin notification sent to {_admin_emails}")
+        except Exception as _e:
+            logger.error(f"[Contact] ❌ Admin notification failed: {_e}")
+
+        # ── Referral handling ─────────────────────────────────────────────
         if referral:
             if referral.is_expired:
                 logger.warning(f'[Referral] Expired link used: {referral.referral_code}')
@@ -249,12 +292,20 @@ def contact(request):
                 # Referrer ko congratulations + commission email bhejo
                 _send_referral_converted_email(referral)
 
-        return redirect('/')
+        return redirect('contact_thankyou')
 
     ref_code = request.GET.get('ref', '')
     return render(request, 'website/contact.html', {
         **base_context(),
         'ref_code': ref_code,
+    })
+
+
+def contact_thankyou(request):
+    """Thank you page shown after contact form submission."""
+    return render(request, 'website/contact_thankyou.html', {
+        **base_context(),
+        'page_title': 'Message Sent!',
     })
 
 
