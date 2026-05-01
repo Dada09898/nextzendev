@@ -1481,7 +1481,7 @@ def _verify_otp(input_otp: str, stored_hash: str) -> bool:
 def _send_email_otp(email: str, otp: str, site_name: str) -> bool:
     """Send OTP via email using HTML template. OTP NOT in subject line (security)."""
     try:
-        html_body = render_to_string('email_payment_otp.html', {
+        html_body = render_to_string('website/email_payment_otp.html', {
             'otp':       otp,
             'site_name': site_name,
         })
