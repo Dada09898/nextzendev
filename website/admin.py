@@ -722,194 +722,96 @@ class InvoiceItemInline(admin.TabularInline):
     item_total.short_description = 'Total'
 
 
-# ══════════════════════════════════════════════════════════════════
-# INVOICE ADMIN ADDITIONS
-# ══════════════════════════════════════════════════════════════════
-# Ye code apne admin.py ke Invoice admin section mein update karo
-
-from django.contrib import admin
-from django.utils.html import format_html
-from django.urls import reverse
-from .models import Invoice, InvoiceItem
-
-
-class InvoiceItemInline(admin.TabularInline):
-    """Inline editor for invoice line items"""
-    model = InvoiceItem
-    extra = 1
-    fields = ('description', 'quantity', 'unit_price', 'total')
-    readonly_fields = ('total',)
-
-
 @admin.register(Invoice)
 class InvoiceAdmin(admin.ModelAdmin):
-    list_display = (
-        'invoice_number', 'client_name', 'status_badge', 
-        'total_amount_display', 'issue_date', 'due_date', 
-        'view_button', 'download_button', 'email_button'
-    )
-    list_filter = ('status', 'issue_date', 'due_date', 'created_at')
-    search_fields = (
-        'invoice_number', 'client_name', 'client_company', 
-        'client_email', 'from_name'
-    )
-    readonly_fields = (
-        'invoice_number', 'created_at', 'updated_at', 
-        'subtotal', 'tax_amount', 'total_amount',
-        'view_invoice_link', 'download_invoice_link'
-    )
-    inlines = [InvoiceItemInline]
-    date_hierarchy = 'created_at'
-    actions = ['generate_pdf_action', 'send_email_action', 'mark_as_paid', 'mark_as_sent']
-    
+    list_display  = ('invoice_number', 'client_name', 'client_email',
+                     'total_badge', 'status_badge', 'issue_date', 'due_date',
+                     'pdf_action')
+    list_filter   = ('status', 'issue_date')
+    search_fields = ('invoice_number', 'client_name', 'client_email', 'client_company')
+    list_display_links = ('invoice_number',)
+    readonly_fields = ('invoice_number', 'subtotal', 'tax_amount',
+                       'total_amount', 'created_at', 'updated_at')
+    date_hierarchy = 'issue_date'
+    inlines       = [InvoiceItemInline]
+    actions       = ['generate_pdf', 'send_invoice_email_action', 'mark_paid', 'mark_overdue']
+
     fieldsets = (
-        ('📄 Invoice Details', {
-            'fields': (
-                'invoice_number', 'status', 'issue_date', 'due_date',
-                'view_invoice_link', 'download_invoice_link'
-            )
+        ('📄 Invoice', {
+            'fields': ('invoice_number', 'status', 'issue_date', 'due_date'),
+        }),
+        ('👤 Billed To', {
+            'fields': ('client', 'client_name', 'client_email', 'client_phone',
+                       'client_company', 'client_address', 'client_gstin'),
         }),
         ('🏢 From (Your Company)', {
-            'fields': (
-                'from_name', 'from_email', 'from_address', 'from_gstin'
-            )
+            'fields': ('from_name', 'from_email', 'from_address', 'from_gstin'),
+            'classes': ('collapse',),
         }),
-        ('👤 Bill To (Client)', {
-            'fields': (
-                'client_name', 'client_company', 'client_email', 
-                'client_phone', 'client_address', 'client_gstin'
-            )
+        ('💰 Financials', {
+            'fields': ('subtotal', 'tax_percent', 'tax_amount', 'discount', 'total_amount'),
         }),
-        ('💰 Amounts (Auto-calculated)', {
-            'fields': (
-                'subtotal', 'tax_percent', 'tax_amount', 
-                'discount', 'total_amount'
-            ),
-            'classes': ('collapse',)
-        }),
-        ('📝 Additional Info', {
+        ('📝 Notes & Terms', {
             'fields': ('notes', 'terms'),
-            'classes': ('collapse',)
+            'classes': ('collapse',),
         }),
-        ('📎 Files', {
-            'fields': ('pdf_file',),
-            'classes': ('collapse',)
+        ('🔗 Links', {
+            'fields': ('payment_order', 'pdf_file'),
+            'classes': ('collapse',),
         }),
         ('🕒 Timestamps', {
             'fields': ('sent_at', 'paid_at', 'created_at', 'updated_at'),
-            'classes': ('collapse',)
+            'classes': ('collapse',),
         }),
     )
-    
-    # ── Custom display methods ────────────────────────────────────
-    
+
     def status_badge(self, obj):
-        """Display colorful status badge"""
         colors = {
-            'draft': '#94a3b8',
-            'sent': '#3b82f6',
-            'paid': '#10b981',
-            'overdue': '#ef4444',
-            'cancelled': '#6b7280',
+            'draft': '#6b7280', 'sent': '#3b82f6', 'paid': '#10b981',
+            'overdue': '#ef4444', 'cancelled': '#9ca3af',
         }
-        icons = {
-            'draft': '📝',
-            'sent': '📤',
-            'paid': '✅',
-            'overdue': '⚠️',
-            'cancelled': '❌',
-        }
-        color = colors.get(obj.status, '#6b7280')
-        icon = icons.get(obj.status, '•')
         return format_html(
-            '<span style="background:{};color:#fff;padding:4px 12px;'
-            'border-radius:99px;font-size:11px;font-weight:600;">'
-            '{} {}</span>',
-            color, icon, obj.get_status_display()
+            '<span style="background:{};color:#fff;padding:2px 8px;border-radius:12px;font-size:12px;">{}</span>',
+            colors.get(obj.status, '#6b7280'), obj.get_status_display()
         )
     status_badge.short_description = 'Status'
-    
-    def total_amount_display(self, obj):
-        """Display total amount with currency symbol"""
-        return format_html(
-            '<span style="font-weight:600;color:#1f2937;">₹{:,.2f}</span>',
-            float(obj.total_amount)
-        )
-    total_amount_display.short_description = 'Total Amount'
-    
-    def view_button(self, obj):
-        """View invoice in browser button"""
-        url = reverse('view_invoice', args=[obj.invoice_number])
-        return format_html(
-            '<a href="{}" target="_blank" style="display:inline-block;'
-            'background:#3b82f6;color:#fff;padding:4px 12px;'
-            'border-radius:4px;text-decoration:none;font-size:11px;">'
-            '👁️ View</a>',
-            url
-        )
-    view_button.short_description = 'View'
-    
-    def download_button(self, obj):
-        """Download PDF button"""
+
+    def total_badge(self, obj):
+        try:
+            return format_html('<strong style="color:#10b981;">₹{:,.2f}</strong>', float(obj.total_amount))
+        except (TypeError, ValueError):
+            return format_html('<strong style="color:#9ca3af;">₹0.00</strong>')
+    total_badge.short_description = '💰 Total'
+    total_badge.admin_order_field = 'total_amount'
+
+    def pdf_action(self, obj):
         if obj.pdf_file:
-            url = reverse('download_invoice', args=[obj.invoice_number])
-            return format_html(
-                '<a href="{}" style="display:inline-block;'
-                'background:#10b981;color:#fff;padding:4px 12px;'
-                'border-radius:4px;text-decoration:none;font-size:11px;">'
-                '📥 PDF</a>',
-                url
-            )
-        return format_html(
-            '<span style="color:#94a3b8;font-size:11px;">No PDF</span>'
-        )
-    download_button.short_description = 'Download'
-    
-    def email_button(self, obj):
-        """Email invoice button"""
-        if obj.client_email:
-            return format_html(
-                '<a href="#" onclick="return confirm(\'Send invoice to {}?\');" '
-                'style="display:inline-block;background:#f59e0b;color:#fff;'
-                'padding:4px 12px;border-radius:4px;text-decoration:none;font-size:11px;">'
-                '📧 Email</a>',
-                obj.client_email
-            )
-        return format_html(
-            '<span style="color:#94a3b8;font-size:11px;">No Email</span>'
-        )
-    email_button.short_description = 'Send'
-    
-    def view_invoice_link(self, obj):
-        """Readonly field showing clickable view link"""
-        if obj.invoice_number:
-            url = reverse('view_invoice', args=[obj.invoice_number])
-            return format_html(
-                '<a href="{}" target="_blank" style="color:#3b82f6;'
-                'font-weight:600;">🔗 View Invoice in Browser</a>',
-                url
-            )
-        return '—'
-    view_invoice_link.short_description = 'Invoice View Link'
-    
-    def download_invoice_link(self, obj):
-        """Readonly field showing clickable download link"""
-        if obj.pdf_file:
-            url = reverse('download_invoice', args=[obj.invoice_number])
-            return format_html(
-                '<a href="{}" style="color:#10b981;font-weight:600;">'
-                '📥 Download PDF</a>',
-                url
-            )
-        return format_html(
-            '<span style="color:#94a3b8;">PDF not generated yet</span>'
-        )
-    download_invoice_link.short_description = 'PDF Download Link'
-    
-    # ── Admin Actions ─────────────────────────────────────────────
-    
-    def generate_pdf_action(self, request, queryset):
-        """Generate PDF for selected invoices"""
+            return format_html('<a href="{}" target="_blank">📥 Download PDF</a>', obj.pdf_file.url)
+        url = reverse('admin:website_invoice_generate_pdf_single', args=[obj.pk])
+        return format_html('<a href="{}">🖨️ Generate PDF</a>', url)
+    pdf_action.short_description = 'PDF'
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path('<int:pk>/generate-pdf/',
+                 self.admin_site.admin_view(self.generate_pdf_single),
+                 name='website_invoice_generate_pdf_single'),
+        ]
+        return custom + urls
+
+    def generate_pdf_single(self, request, pk):
+        """Generate and save PDF for a single invoice."""
+        from .invoice_utils import generate_invoice_pdf
+        try:
+            invoice = Invoice.objects.get(pk=pk)
+            generate_invoice_pdf(invoice)
+            dj_messages.success(request, f'✅ PDF generated for {invoice.invoice_number}')
+        except Exception as e:
+            dj_messages.error(request, f'❌ PDF generation failed: {e}')
+        return HttpResponseRedirect(reverse('admin:website_invoice_change', args=[pk]))
+
+    def generate_pdf(self, request, queryset):
         from .invoice_utils import generate_invoice_pdf
         count = 0
         for invoice in queryset:
@@ -917,111 +819,38 @@ class InvoiceAdmin(admin.ModelAdmin):
                 generate_invoice_pdf(invoice)
                 count += 1
             except Exception as e:
-                self.message_user(
-                    request,
-                    f'❌ Error generating PDF for {invoice.invoice_number}: {e}',
-                    level='error'
-                )
-        if count:
-            self.message_user(
-                request,
-                f'✅ Successfully generated {count} PDF(s)',
-                level='success'
-            )
-    generate_pdf_action.short_description = '📄 Generate PDF for selected'
-    
-    def send_email_action(self, request, queryset):
-        """Send invoice email for selected invoices"""
+                self.message_user(request, f'❌ Failed for {invoice.invoice_number}: {e}', level='error')
+        self.message_user(request, f'🖨️ PDFs generated for {count} invoice(s).')
+    generate_pdf.short_description = '🖨️ Generate PDF for selected'
+
+    def send_invoice_email_action(self, request, queryset):
         from .invoice_utils import send_invoice_by_email
-        count = 0
-        for invoice in queryset:
-            if not invoice.client_email:
-                self.message_user(
-                    request,
-                    f'⚠️ No email address for {invoice.invoice_number}',
-                    level='warning'
-                )
-                continue
+        sent = 0
+        for invoice in queryset.exclude(status='draft'):
             try:
                 send_invoice_by_email(invoice)
-                count += 1
+                sent += 1
             except Exception as e:
-                self.message_user(
-                    request,
-                    f'❌ Error sending email for {invoice.invoice_number}: {e}',
-                    level='error'
-                )
-        if count:
-            self.message_user(
-                request,
-                f'✅ Successfully sent {count} invoice email(s)',
-                level='success'
-            )
-    send_email_action.short_description = '📧 Email selected invoices'
-    
-    def mark_as_paid(self, request, queryset):
-        """Mark selected invoices as paid"""
-        from django.utils import timezone
-        updated = queryset.exclude(status='paid').update(
-            status='paid',
-            paid_at=timezone.now()
-        )
-        self.message_user(
-            request,
-            f'✅ Marked {updated} invoice(s) as PAID',
-            level='success'
-        )
-    mark_as_paid.short_description = '✅ Mark as Paid'
-    
-    def mark_as_sent(self, request, queryset):
-        """Mark selected invoices as sent"""
-        from django.utils import timezone
-        updated = queryset.filter(status='draft').update(
-            status='sent',
-            sent_at=timezone.now()
-        )
-        self.message_user(
-            request,
-            f'📤 Marked {updated} invoice(s) as SENT',
-            level='success'
-        )
-    mark_as_sent.short_description = '📤 Mark as Sent'
-    
-    def save_formset(self, request, form, formset, change):
-        """Auto-recalculate totals when line items change"""
-        instances = formset.save(commit=False)
-        for instance in instances:
-            instance.save()
-        formset.save_m2m()
-        
-        # Recalculate invoice totals
-        if change and hasattr(form, 'instance'):
-            invoice = form.instance
-            invoice.recalculate()
+                self.message_user(request, f'❌ Failed for {invoice.invoice_number}: {e}', level='error')
+        self.message_user(request, f'📧 Invoice emailed for {sent} invoice(s).')
+    send_invoice_email_action.short_description = '📧 Send invoice by email'
 
+    def mark_paid(self, request, queryset):
+        updated = queryset.exclude(status='paid').update(status='paid', paid_at=timezone.now())
+        self.message_user(request, f'✅ {updated} invoice(s) marked as Paid.')
+    mark_paid.short_description = '✅ Mark as Paid'
 
-# ══════════════════════════════════════════════════════════════════
-# INVOICE ITEM ADMIN (Optional - for direct editing)
-# ══════════════════════════════════════════════════════════════════
+    def mark_overdue(self, request, queryset):
+        updated = queryset.filter(status='sent').update(status='overdue')
+        self.message_user(request, f'⚠️ {updated} invoice(s) marked as Overdue.')
+    mark_overdue.short_description = '⚠️ Mark as Overdue'
 
-@admin.register(InvoiceItem)
-class InvoiceItemAdmin(admin.ModelAdmin):
-    list_display = ('invoice', 'description', 'quantity', 'unit_price', 'total')
-    list_filter = ('invoice__status', 'invoice__created_at')
-    search_fields = ('invoice__invoice_number', 'description')
-    readonly_fields = ('total',)
-    
-    fieldsets = (
-        ('Invoice Item Details', {
-            'fields': ('invoice', 'description', 'quantity', 'unit_price', 'total')
-        }),
-    )
-    
     def save_model(self, request, obj, form, change):
-        """Auto-recalculate invoice totals after saving item"""
         super().save_model(request, obj, form, change)
-        if obj.invoice:
-            obj.invoice.recalculate()
+        # Recalculate totals after saving (inline items saved separately)
+        # Admins can manually trigger recalculate via the action or the inline saves
+        obj.recalculate()
+
 
 # ══════════════════════════════════════════════════════════════════
 # ░░░░░░░░░░░░  📧 EMAIL SECTION  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
