@@ -684,9 +684,20 @@ def chatbot_api(request):
 
     if not session_id:
         session_id = str(uuid.uuid4())
+    
+    if not msg:
+        return JsonResponse({
+            "reply":      "👋 Hello! Welcome to " + getattr(settings, 'SITE_NAME', 'us') + ".\n\nWhat would you like to build?\n(e.g. Website / App / Data Solution)",
+            "session_id": session_id,
+            "flow_state": "greeted",
+            "is_ended":   False,
+            "admin_active": False,
+        })
 
     session, created = ChatSession.objects.get_or_create(session_id=session_id)
-
+    if created:
+        session.flow_state = "greeted"
+        session.save()
     # Block all input if conversation has been ended
     if session.is_ended:
         # Save the user message even for ended sessions (audit trail)
@@ -806,7 +817,12 @@ def chatbot_api(request):
             reply = "Our team has been notified and will respond here shortly. 😊"
 
     session.save()
-
+    if msg:
+        ChatMessage.objects.create(
+            session=session,
+            sender="user",
+            message=msg,
+        )
     ChatMessage.objects.create(
         session=session,
         sender="bot",

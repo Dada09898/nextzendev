@@ -17,8 +17,13 @@ class BrevoEmailBackend(BaseEmailBackend):
                     "textContent": msg.body,
                 }
 
-                # HTML content support
-                if hasattr(msg, 'alternatives'):
+                # ── Fix: EmailMessage content_subtype='html' handle karo ──
+                if getattr(msg, 'content_subtype', None) == 'html':
+                    payload['htmlContent'] = msg.body
+                    payload['textContent'] = 'Please view this email in an HTML-supported email client.'
+
+                # ── EmailMultiAlternatives ke liye (appointment etc.) ──
+                elif hasattr(msg, 'alternatives'):
                     for content, mimetype in msg.alternatives:
                         if mimetype == 'text/html':
                             payload['htmlContent'] = content

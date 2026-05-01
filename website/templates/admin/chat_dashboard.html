@@ -224,7 +224,8 @@ function markEnded() {
     document.getElementById('ended-banner').style.display   = 'block';
     document.getElementById('reply-bar').style.display      = 'none';
     document.getElementById('chat-title-text').style.color  = '#fca5a5';
-    // Also mark sidebar item
+
+    // Sidebar item update karo
     const item = document.querySelector('.session-item.active');
     if (item) {
         item.classList.add('ended');
@@ -235,9 +236,34 @@ function markEnded() {
             badge.textContent      = 'ENDED';
         }
     }
-    // Stop polling
+
+    // Polling band karo
     clearInterval(pollTimer);
     pollTimer = null;
+
+    // ── Next active session automatically load karo ──
+    setTimeout(function() {
+        const allItems = document.querySelectorAll('.session-item');
+        let nextItem = null;
+
+        allItems.forEach(function(el) {
+            if (!el.classList.contains('ended') && !el.classList.contains('active')) {
+                if (!nextItem) nextItem = el;  // pehla active session lo
+            }
+        });
+
+        if (nextItem) {
+            // Next session load karo automatically
+            const sid = nextItem.id.replace('si-', '');
+            loadChat(sid, nextItem);
+        } else {
+            // Koi active session nahi — blank screen dikhao
+            currentSession = null;
+            document.getElementById('chat-title-text').textContent = 'Select a conversation →';
+            document.getElementById('chat-title-text').style.color = '';
+            document.getElementById('chat-box').innerHTML = '<div class="no-session-msg">← Click a user on the left to view their chat</div>';
+        }
+    }, 1000);  // 1 second baad — taaki system message pehle dikh jaye
 }
 
 /* ── End conversation ── */
