@@ -8,7 +8,7 @@ urlpatterns = [
     path('portfolio', views.portfolio, name='portfolio'),
     path('about', views.about, name='about'),
     path('contact', views.contact, name='contact'),
-
+    path('contact/thank-you/', views.contact_thankyou, name='contact_thankyou'), 
     # ── Legal pages ─────────────────────────────────────────────────────
     path('terms/', views.terms, name='terms'),
     path('privacy/', views.privacy, name='privacy'),
@@ -68,4 +68,6 @@ urlpatterns = [
     
     # ── Invoice Download ──────────────────────────────────────────
      path('invoice/<str:invoice_number>/download/', views.download_invoice, name='download_invoice')
+
+     
 ]
