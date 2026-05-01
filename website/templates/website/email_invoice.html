@@ -3,42 +3,240 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Invoice {{ payment.invoice_number }}</title>
+  <title>Invoice {% if invoice %}{{ invoice.invoice_number }}{% else %}{{ payment.invoice_number }}{% endif %}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
-    .wrapper { max-width: 620px; margin: 30px auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-    .header { background: linear-gradient(135deg, #6366f1, #8b5cf6); padding: 36px 40px; text-align: center; }
-    .header h1 { color: #fff; font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
-    .header p  { color: rgba(255,255,255,0.8); margin-top: 4px; font-size: 14px; }
-    .badge { display: inline-block; background: rgba(255,255,255,0.2); color: #fff; border-radius: 20px; padding: 4px 14px; font-size: 12px; margin-top: 10px; font-weight: 600; }
-    .body { padding: 36px 40px; }
-    .greeting { font-size: 16px; margin-bottom: 24px; color: #555; }
-    .invoice-box { background: #f8f9ff; border: 1px solid #e0e4ff; border-radius: 10px; padding: 24px; margin-bottom: 24px; }
-    .invoice-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 14px; }
-    .invoice-row:last-child { border-bottom: none; }
-    .invoice-row .label { color: #666; }
-    .invoice-row .value { font-weight: 600; color: #333; }
-    .total-row { display: flex; justify-content: space-between; padding: 14px 20px; background: #6366f1; border-radius: 8px; margin-top: 16px; }
-    .total-row .label { color: rgba(255,255,255,0.85); font-size: 15px; }
-    .total-row .value { color: #fff; font-size: 20px; font-weight: 700; }
-    .success-badge { text-align: center; background: #ecfdf5; border: 1px solid #6ee7b7; border-radius: 10px; padding: 16px; margin-bottom: 24px; color: #065f46; font-weight: 600; font-size: 15px; }
-    .footer { background: #f8f9ff; padding: 24px 40px; text-align: center; border-top: 1px solid #eee; }
-    .footer p { font-size: 12px; color: #999; line-height: 1.6; }
-    .footer a { color: #6366f1; text-decoration: none; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; }
+    .wrapper { max-width: 680px; margin: 30px auto; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.10); }
+    .header { background: linear-gradient(135deg, #1e40af, #3b82f6); padding: 36px 44px; display: flex; justify-content: space-between; align-items: center; }
+    .header-left h1 { color: #fff; font-size: 22px; font-weight: 800; }
+    .header-left p  { color: rgba(255,255,255,0.75); font-size: 13px; margin-top: 4px; }
+    .header-right { text-align: right; }
+    .header-right .inv-label { color: rgba(255,255,255,0.7); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+    .header-right .inv-number { color: #fff; font-size: 20px; font-weight: 800; margin-top: 2px; }
+    .status-pill { display: inline-block; margin-top: 6px; padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .status-paid    { background: #d1fae5; color: #065f46; }
+    .status-sent    { background: #dbeafe; color: #1e40af; }
+    .status-draft   { background: #f3f4f6; color: #6b7280; }
+    .status-overdue { background: #fee2e2; color: #991b1b; }
+    .success-banner { background: linear-gradient(90deg, #ecfdf5, #d1fae5); border-bottom: 2px solid #6ee7b7; padding: 14px 44px; }
+    .success-banner span { color: #065f46; font-weight: 700; font-size: 14px; }
+    .body { padding: 36px 44px; }
+    .greeting { font-size: 15px; color: #555; line-height: 1.7; margin-bottom: 28px; }
+    .greeting strong { color: #1e40af; }
+    .parties { display: flex; gap: 20px; margin-bottom: 28px; background: #f8faff; border-radius: 10px; padding: 20px; border: 1px solid #e0e7ff; }
+    .party { flex: 1; }
+    .party-label { font-size: 10px; font-weight: 800; color: #3b82f6; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px; }
+    .party-name { font-size: 14px; font-weight: 700; color: #111827; margin-bottom: 3px; }
+    .party-detail { font-size: 12px; color: #6b7280; line-height: 1.7; }
+    .party-divider { width: 1px; background: #e0e7ff; }
+    .dates { display: flex; gap: 12px; margin-bottom: 28px; }
+    .date-box { flex: 1; background: #f8faff; border: 1px solid #e0e7ff; border-radius: 8px; padding: 12px 16px; }
+    .date-box .dl { font-size: 10px; font-weight: 700; color: #3b82f6; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+    .date-box .dv { font-size: 13px; font-weight: 700; color: #1f2937; }
+    .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; border-radius: 8px; overflow: hidden; }
+    .items-table thead tr { background: #1e40af; }
+    .items-table thead th { padding: 10px 14px; font-size: 11px; font-weight: 700; color: #fff; text-align: left; text-transform: uppercase; letter-spacing: 0.5px; }
+    .items-table thead th:last-child { text-align: right; }
+    .items-table tbody tr { border-bottom: 1px solid #f3f4f6; }
+    .items-table tbody tr:nth-child(even) { background: #f8faff; }
+    .items-table tbody td { padding: 11px 14px; font-size: 13px; color: #374151; }
+    .items-table tbody td:last-child { text-align: right; font-weight: 700; color: #1e40af; }
+    .totals-wrap { display: flex; justify-content: flex-end; margin-bottom: 24px; }
+    .totals-box { width: 280px; }
+    .totals-row { display: flex; justify-content: space-between; padding: 7px 0; font-size: 13px; border-bottom: 1px solid #f3f4f6; color: #6b7280; }
+    .totals-row .tv { font-weight: 600; color: #374151; }
+    .totals-row.discount .tv { color: #10b981; }
+    .totals-row.total-final { margin-top: 4px; padding: 12px 16px; background: #1e40af; border-radius: 8px; border: none; }
+    .totals-row.total-final .tl { color: rgba(255,255,255,0.85); font-weight: 700; font-size: 14px; }
+    .totals-row.total-final .tv { color: #fff; font-weight: 800; font-size: 18px; }
+    .notes-box { background: #fffbeb; border-left: 4px solid #f59e0b; border-radius: 6px; padding: 14px 16px; margin-bottom: 20px; }
+    .notes-box .nl { font-size: 10px; font-weight: 800; color: #92400e; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+    .notes-box p { font-size: 12px; color: #78350f; line-height: 1.6; }
+    .download-wrap { text-align: center; margin: 28px 0; }
+    .download-btn { display: inline-block; background: linear-gradient(135deg, #1e40af, #3b82f6); color: #fff !important; text-decoration: none; padding: 14px 36px; border-radius: 8px; font-size: 15px; font-weight: 700; }
+    .payment-detail-box { background: #f8faff; border: 1px solid #e0e7ff; border-radius: 10px; padding: 20px; margin-bottom: 24px; }
+    .pd-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #eee; font-size: 13px; }
+    .pd-row:last-child { border-bottom: none; }
+    .pd-row .pl { color: #6b7280; }
+    .pd-row .pv { font-weight: 600; color: #1f2937; }
+    .pd-row .pv.green { color: #10b981; }
+    .pd-row .pv.gray  { color: #9ca3af; font-size: 11px; }
+    .footer { background: #f8faff; padding: 24px 44px; text-align: center; border-top: 1px solid #e5e7eb; }
+    .footer p { font-size: 12px; color: #9ca3af; line-height: 1.8; }
+    .footer a { color: #3b82f6; text-decoration: none; }
+    .footer .brand { font-size: 13px; font-weight: 700; color: #1e40af; margin-bottom: 6px; }
   </style>
 </head>
 <body>
 <div class="wrapper">
 
-  <!-- Header -->
+{% if invoice %}
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- INVOICE OBJECT — Admin se bheja gaya           -->
+  <!-- ═══════════════════════════════════════════════ -->
+
   <div class="header">
-    <h1>{{ site_name }}</h1>
-    <p>Payment Confirmation & Invoice</p>
-    <span class="badge">✅ Payment Successful</span>
+    <div class="header-left">
+      <h1>{{ invoice.from_name|default:site_name }}</h1>
+      <p>{% if invoice.from_email %}{{ invoice.from_email }}{% endif %}</p>
+    </div>
+    <div class="header-right">
+      <div class="inv-label">Invoice</div>
+      <div class="inv-number"># {{ invoice.invoice_number }}</div>
+      <span class="status-pill status-{{ invoice.status }}">{{ invoice.get_status_display }}</span>
+    </div>
   </div>
 
-  <!-- Body -->
+  <div class="body">
+
+    <p class="greeting">
+      Dear <strong>{{ invoice.client_name }}</strong>,<br><br>
+      Please find your invoice attached as a PDF. Below is a complete summary for your records.
+    </p>
+
+    <!-- Bill To / From -->
+    <div class="parties">
+      <div class="party">
+        <div class="party-label">Bill To</div>
+        <div class="party-name">{{ invoice.client_name }}</div>
+        <div class="party-detail">
+          {{ invoice.client_email }}<br>
+          {% if invoice.client_phone %}{{ invoice.client_phone }}<br>{% endif %}
+          {% if invoice.client_company %}{{ invoice.client_company }}<br>{% endif %}
+          {% if invoice.client_address %}{{ invoice.client_address }}<br>{% endif %}
+          {% if invoice.client_gstin %}<strong>GSTIN:</strong> {{ invoice.client_gstin }}{% endif %}
+        </div>
+      </div>
+      <div class="party-divider"></div>
+      <div class="party">
+        <div class="party-label">From</div>
+        <div class="party-name">{{ invoice.from_name }}</div>
+        <div class="party-detail">
+          {{ invoice.from_email }}<br>
+          {% if invoice.from_address %}{{ invoice.from_address }}<br>{% endif %}
+          {% if invoice.from_gstin %}<strong>GSTIN:</strong> {{ invoice.from_gstin }}{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Dates -->
+    <div class="dates">
+      <div class="date-box">
+        <div class="dl">Issue Date</div>
+        <div class="dv">{{ invoice.issue_date|date:"d M Y" }}</div>
+      </div>
+      {% if invoice.due_date %}
+      <div class="date-box">
+        <div class="dl">Due Date</div>
+        <div class="dv">{{ invoice.due_date|date:"d M Y" }}</div>
+      </div>
+      {% endif %}
+      <div class="date-box">
+        <div class="dl">Status</div>
+        <div class="dv">{{ invoice.get_status_display }}</div>
+      </div>
+    </div>
+
+    <!-- Line Items -->
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th style="width:36px;">#</th>
+          <th>Description</th>
+          <th style="width:60px;text-align:center;">Qty</th>
+          <th style="width:110px;text-align:right;">Unit Price</th>
+          <th style="width:110px;">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in invoice.items.all %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ item.description }}</td>
+          <td style="text-align:center;">{{ item.quantity }}</td>
+          <td style="text-align:right;">₹{{ item.unit_price|floatformat:2 }}</td>
+          <td>₹{{ item.total|floatformat:2 }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Totals — sirf wahi dikhao jo hai -->
+    <div class="totals-wrap">
+      <div class="totals-box">
+
+        <div class="totals-row">
+          <span class="tl">Subtotal</span>
+          <span class="tv">₹{{ invoice.subtotal|floatformat:2 }}</span>
+        </div>
+
+        {% if invoice.discount and invoice.discount > 0 %}
+        <div class="totals-row discount">
+          <span class="tl">Discount</span>
+          <span class="tv">− ₹{{ invoice.discount|floatformat:2 }}</span>
+        </div>
+        {% endif %}
+
+        {% if invoice.tax_percent and invoice.tax_percent > 0 %}
+        <div class="totals-row">
+          <span class="tl">GST ({{ invoice.tax_percent }}%)</span>
+          <span class="tv">₹{{ invoice.tax_amount|floatformat:2 }}</span>
+        </div>
+        {% endif %}
+
+        <div class="totals-row total-final">
+          <span class="tl">Total Amount</span>
+          <span class="tv">₹{{ invoice.total_amount|floatformat:2 }}</span>
+        </div>
+
+      </div>
+    </div>
+
+    {% if invoice.notes %}
+    <div class="notes-box">
+      <div class="nl">📝 Notes</div>
+      <p>{{ invoice.notes }}</p>
+    </div>
+    {% endif %}
+
+    {% if invoice.terms %}
+    <div class="notes-box" style="border-left-color:#10b981; background:#f0fdf4;">
+      <div class="nl" style="color:#065f46;">📋 Terms & Conditions</div>
+      <p style="color:#166534;">{{ invoice.terms }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Download Button -->
+    <div class="download-wrap">
+      <a href="{{ site_url }}/invoice/{{ invoice.invoice_number }}/download/" class="download-btn">
+        📥 Download Invoice PDF
+      </a>
+    </div>
+
+  </div>
+
+{% else %}
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- PAYMENT OBJECT — Payment success ke baad       -->
+  <!-- ═══════════════════════════════════════════════ -->
+
+  <div class="header">
+    <div class="header-left">
+      <h1>{{ site_name }}</h1>
+      <p>Payment Confirmation & Invoice</p>
+    </div>
+    <div class="header-right">
+      <div class="inv-label">Invoice</div>
+      <div class="inv-number"># {{ payment.invoice_number }}</div>
+      <span class="status-pill status-paid">✅ Paid</span>
+    </div>
+  </div>
+
+  <div class="success-banner">
+    <span>🎉 Payment of ₹{{ payment.final_amount }} received successfully!</span>
+  </div>
+
   <div class="body">
 
     <p class="greeting">
@@ -47,72 +245,77 @@
       Below is your invoice summary for your records.
     </p>
 
-    <div class="success-badge">
-      🎉 Payment of ₹{{ payment.final_amount }} received successfully!
-    </div>
-
-    <!-- Invoice Details -->
-    <div class="invoice-box">
-      <div class="invoice-row">
-        <span class="label">Invoice Number</span>
-        <span class="value">{{ payment.invoice_number }}</span>
+    <div class="payment-detail-box">
+      <div class="pd-row">
+        <span class="pl">Invoice Number</span>
+        <span class="pv">{{ payment.invoice_number }}</span>
       </div>
-      <div class="invoice-row">
-        <span class="label">Date</span>
-        <span class="value">{{ payment.paid_at|date:"d M Y, h:i A" }}</span>
+      <div class="pd-row">
+        <span class="pl">Payment Date</span>
+        <span class="pv">{{ payment.paid_at|date:"d M Y, h:i A" }}</span>
       </div>
-      <div class="invoice-row">
-        <span class="label">Customer Name</span>
-        <span class="value">{{ payment.customer_name }}</span>
+      <div class="pd-row">
+        <span class="pl">Customer Name</span>
+        <span class="pv">{{ payment.customer_name }}</span>
       </div>
-      <div class="invoice-row">
-        <span class="label">Email</span>
-        <span class="value">{{ payment.customer_email }}</span>
+      <div class="pd-row">
+        <span class="pl">Email</span>
+        <span class="pv">{{ payment.customer_email }}</span>
       </div>
       {% if payment.customer_phone %}
-      <div class="invoice-row">
-        <span class="label">Phone</span>
-        <span class="value">{{ payment.customer_phone }}</span>
+      <div class="pd-row">
+        <span class="pl">Phone</span>
+        <span class="pv">{{ payment.customer_phone }}</span>
       </div>
       {% endif %}
-      <div class="invoice-row">
-        <span class="label">Description</span>
-        <span class="value">{{ payment.description|default:"Service Payment" }}</span>
+      <div class="pd-row">
+        <span class="pl">Description</span>
+        <span class="pv">{{ payment.description|default:"Service Payment" }}</span>
       </div>
-      <div class="invoice-row">
-        <span class="label">Payment ID</span>
-        <span class="value" style="font-size:12px; color:#888;">{{ payment.razorpay_payment_id }}</span>
+      <div class="pd-row">
+        <span class="pl">Payment ID</span>
+        <span class="pv gray">{{ payment.razorpay_payment_id }}</span>
       </div>
-      {% if payment.discount_amount > 0 %}
-      <div class="invoice-row">
-        <span class="label">Original Amount</span>
-        <span class="value">₹{{ payment.amount }}</span>
-      </div>
-      <div class="invoice-row">
-        <span class="label">Discount{% if payment.coupon %} ({{ payment.coupon.code }}){% endif %}</span>
-        <span class="value" style="color:#10b981;">-₹{{ payment.discount_amount }}</span>
-      </div>
-      {% endif %}
     </div>
 
-    <!-- Total -->
-    <div class="total-row">
-      <span class="label">Amount Paid</span>
-      <span class="value">₹{{ payment.final_amount }}</span>
+    <!-- Totals — discount/coupon sirf tab dikhe jab ho -->
+    <div class="totals-wrap">
+      <div class="totals-box">
+
+        {% if payment.discount_amount > 0 %}
+        <div class="totals-row">
+          <span class="tl">Original Amount</span>
+          <span class="tv">₹{{ payment.amount|floatformat:2 }}</span>
+        </div>
+        <div class="totals-row discount">
+          <span class="tl">Discount{% if payment.coupon %} ({{ payment.coupon.code }}){% endif %}</span>
+          <span class="tv">− ₹{{ payment.discount_amount|floatformat:2 }}</span>
+        </div>
+        {% endif %}
+
+        <div class="totals-row total-final">
+          <span class="tl">Amount Paid</span>
+          <span class="tv">₹{{ payment.final_amount|floatformat:2 }}</span>
+        </div>
+
+      </div>
     </div>
 
   </div>
 
-  <!-- Footer -->
+{% endif %}
+
+  <!-- Footer — dono ke liye same -->
   <div class="footer">
+    <div class="brand">{{ site_name }}</div>
     <p>
-      For any questions about this invoice, contact us at
+      Questions about this invoice? Contact us at
       <a href="mailto:{{ support_email }}">{{ support_email }}</a>
     </p>
-    <p style="margin-top:8px;">
-      Thank you for choosing {{ site_name }}. We look forward to delivering an exceptional project for you! 🚀
+    <p style="margin-top:6px;">
+      Thank you for choosing {{ site_name }}. We look forward to delivering exceptional work! 🚀
     </p>
-    <p style="margin-top:12px; font-size:11px;">
+    <p style="margin-top:10px; font-size:11px;">
       This is an auto-generated invoice. Please keep it for your records.
     </p>
   </div>

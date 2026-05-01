@@ -361,6 +361,7 @@ def send_invoice_by_email(invoice) -> None:
         'invoice':       invoice,
         'site_name':     getattr(settings, 'SITE_NAME', invoice.from_name),
         'support_email': getattr(settings, 'SUPPORT_EMAIL', invoice.from_email),
+        'site_url':      getattr(settings, 'SITE_URL', 'https://nextzendev.in'),
     })
 
     email = EmailMessage(

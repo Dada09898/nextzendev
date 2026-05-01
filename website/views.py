@@ -1004,6 +1004,7 @@ def send_invoice_email(payment: PaymentOrder):
         'payment': payment,
         'site_name': settings.SITE_NAME,
         'support_email': _support_email,
+        'site_url':      getattr(settings, 'SITE_URL', 'https://nextzendev.in'),
     })
     mail = EmailMessage(
         subject=f"Your Invoice {payment.invoice_number} — {settings.SITE_NAME}",
