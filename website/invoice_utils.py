@@ -357,7 +357,7 @@ def send_invoice_by_email(invoice) -> None:
 
     subject = f'Invoice {invoice.invoice_number} — {invoice.from_name}'
 
-    html_body = render_to_string('email_invoice.html', {
+    html_body = render_to_string('website/email_invoice.html', {
         'invoice':       invoice,
         'site_name':     getattr(settings, 'SITE_NAME', invoice.from_name),
         'support_email': getattr(settings, 'SUPPORT_EMAIL', invoice.from_email),
