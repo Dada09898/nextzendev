@@ -1395,6 +1395,38 @@ def verify_payment(request):
     payment.status              = 'paid'
     payment.paid_at             = timezone.now()
     payment.save()
+    
+    payment.save()
+
+    # ── Auto-create Invoice in admin ──────────────────────────
+    try:
+        from .models import Invoice, InvoiceItem
+        invoice_obj, created = Invoice.objects.get_or_create(
+            payment_order=payment,
+            defaults={
+                'client_name':    payment.customer_name,
+                'client_email':   payment.customer_email,
+                'client_phone':   payment.customer_phone or '',
+                'from_name':      getattr(settings, 'SITE_NAME', ''),
+                'from_email':     settings.DEFAULT_FROM_EMAIL,
+                'status':         'paid',
+                'paid_at':        payment.paid_at,
+                'tax_percent':    0,
+                'discount':       payment.discount_amount or 0,
+            }
+        )
+        if created:
+            InvoiceItem.objects.create(
+                invoice     = invoice_obj,
+                description = payment.description or 'Service Payment',
+                quantity    = 1,
+                unit_price  = payment.final_amount,
+            )
+            invoice_obj.recalculate()   # subtotal, tax, total calculate karega
+            logger.info(f"[Payment] Invoice created → {invoice_obj.invoice_number}")
+    except Exception as e:
+        logger.error(f"[Payment] Invoice auto-create failed: {e}")
+    # ─────────────────────────────────────────────────────────
 
     # ── Increment coupon usage ────────────────────────────────
     if payment.coupon:
