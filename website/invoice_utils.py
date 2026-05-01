@@ -13,7 +13,7 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.mail import EmailMessage
 from django.utils import timezone
-
+from django.template.loader import render_to_string
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -351,37 +351,31 @@ def generate_invoice_pdf(invoice) -> None:
 
 
 def send_invoice_by_email(invoice) -> None:
-    """
-    Email the invoice PDF to the client.
-    Generates PDF first if not already generated.
-    """
+    """Email the invoice PDF using HTML template."""
     if not invoice.pdf_file:
         generate_invoice_pdf(invoice)
 
-    subject = f'Invoice {invoice.invoice_number} from {invoice.from_name}'
-    body    = (
-        f'Dear {invoice.client_name},\n\n'
-        f'Please find your invoice {invoice.invoice_number} attached.\n\n'
-        f'Amount Due : {float(invoice.total_amount):,.2f}\n'
-        f'Due Date   : {invoice.due_date.strftime("%d %b %Y") if invoice.due_date else "On Receipt"}\n\n'
-        f'Thank you for your business!\n\n'
-        f'Regards,\n{invoice.from_name}\n{invoice.from_email}'
-    )
+    subject = f'Invoice {invoice.invoice_number} — {invoice.from_name}'
+
+    html_body = render_to_string('email_invoice.html', {
+        'invoice':       invoice,
+        'site_name':     getattr(settings, 'SITE_NAME', invoice.from_name),
+        'support_email': getattr(settings, 'SUPPORT_EMAIL', invoice.from_email),
+    })
 
     email = EmailMessage(
-        subject     = subject,
-        body        = body,
-        from_email  = settings.DEFAULT_FROM_EMAIL,
-        to          = [invoice.client_email],
+        subject    = subject,
+        body       = html_body,
+        from_email = settings.DEFAULT_FROM_EMAIL,
+        to         = [invoice.client_email],
     )
+    email.content_subtype = 'html'
 
-    # Attach PDF
     with invoice.pdf_file.open('rb') as f:
         email.attach(f'{invoice.invoice_number}.pdf', f.read(), 'application/pdf')
 
     email.send(fail_silently=False)
 
-    # Mark sent
     invoice.sent_at = timezone.now()
     if invoice.status == 'draft':
         invoice.status = 'sent'

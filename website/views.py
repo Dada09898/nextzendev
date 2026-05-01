@@ -1479,51 +1479,17 @@ def _verify_otp(input_otp: str, stored_hash: str) -> bool:
 
 
 def _send_email_otp(email: str, otp: str, site_name: str) -> bool:
-    """Send OTP via email. OTP NOT included in subject line (security)."""
+    """Send OTP via email using HTML template. OTP NOT in subject line (security)."""
     try:
-        html = f"""
-        <!DOCTYPE html><html><head><meta charset="UTF-8"></head>
-        <body style="font-family:Arial,sans-serif;background:#f4f6f9;padding:30px;">
-          <div style="max-width:480px;margin:auto;background:#fff;border-radius:12px;
-                      overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
-            <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);
-                        padding:28px 32px;text-align:center;">
-              <h2 style="color:#fff;margin:0;font-size:22px;">{site_name}</h2>
-              <p style="color:rgba(255,255,255,0.85);margin:6px 0 0;font-size:13px;">
-                Payment Identity Verification
-              </p>
-            </div>
-            <div style="padding:32px;">
-              <p style="color:#555;font-size:15px;margin-bottom:24px;">
-                Use the OTP below to verify your identity and proceed with payment.
-                This code expires in <strong>5 minutes</strong>.
-              </p>
-              <div style="background:#f0f0ff;border:2px dashed #6366f1;border-radius:10px;
-                          padding:24px;text-align:center;margin-bottom:24px;">
-                <span style="font-size:38px;font-weight:800;letter-spacing:10px;
-                             color:#6366f1;">{otp}</span>
-              </div>
-              <p style="color:#e53e3e;font-size:13px;text-align:center;font-weight:600;">
-                ⚠️ Never share this OTP with anyone — including our team.
-              </p>
-              <p style="color:#999;font-size:12px;text-align:center;margin-top:8px;">
-                If you didn't request this, please ignore this email.
-              </p>
-            </div>
-            <div style="background:#f8f9ff;padding:16px 32px;
-                        text-align:center;border-top:1px solid #eee;">
-              <p style="color:#aaa;font-size:11px;margin:0;">
-                Automated message from {site_name}. Do not reply.
-              </p>
-            </div>
-          </div>
-        </body></html>
-        """
+        html_body = render_to_string('email_payment_otp.html', {
+            'otp':       otp,
+            'site_name': site_name,
+        })
         mail = EmailMessage(
-            subject=f"[{site_name}] Your Payment Verification Code",  # OTP NOT in subject
-            body=html,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[email],
+            subject    = f'[{site_name}] Your Payment Verification Code',
+            body       = html_body,
+            from_email = settings.DEFAULT_FROM_EMAIL,
+            to         = [email],
         )
         mail.content_subtype = 'html'
         mail.send(fail_silently=False)
@@ -1531,7 +1497,6 @@ def _send_email_otp(email: str, otp: str, site_name: str) -> bool:
     except Exception as e:
         logger.error(f"[OTP] Email send failed to {email}: {e}")
         return False
-
 
 def _send_sms_otp(phone: str, otp: str, site_name: str) -> bool:
     """Send OTP via SMS. Twilio if configured, else dev console fallback."""
