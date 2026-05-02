@@ -884,12 +884,10 @@ function triggerGreeting() {
         setInputEnabled(true);
         session_id = data.session_id;
         sessionStorage.setItem(SESSION_KEY, session_id);
-        fetch(`/chatbot/fetch/?session_id=${session_id}`)   // ← yeh 4 lines
-        .then(r => r.json())                                // ← delete
-        .then(d => {                                        // ← karni
-            lastCount = d.messages.length;                 // ← hain
-            renderMessages(d.messages, d.admin_active, d.is_ended);
-        });
+        if (data.reply) {
+            appendBubble('bot', data.reply, true);
+            lastCount = 0;
+        }
     })
     .catch(() => { showTyping(false); setInputEnabled(true); });
 }
