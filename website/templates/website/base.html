@@ -152,7 +152,34 @@
         border-radius: 20px; padding: 5px 14px;
         max-width: 90%; text-align: center;
     }
-
+    /* ── Message wrapper with time + ticks ── */
+    .msg-wrap {
+        display: flex;
+        flex-direction: column;
+        max-width: 82%;
+    }
+    .msg-wrap.user-wrap { align-self: flex-end; align-items: flex-end; }
+    .msg-wrap.bot-wrap  { align-self: flex-start; align-items: flex-start; }
+    .msg-meta {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 3px;
+        padding: 0 4px;
+    }
+    .msg-time {
+        font-size: 10px;
+        color: #999;
+    }
+    .msg-tick {
+        font-size: 11px;
+        color: #999;
+    }
+    .msg-tick.seen { color: #1ab87a; }
+    .chat-messages p {
+        margin: 0;
+        align-self: unset !important;
+    } 
     /* Typing indicator */
     .typing-indicator {
         display: none;
@@ -697,24 +724,72 @@ function renderMessages(messages, isAdminActive, ended) {
 
 function appendBubble(sender, text, animate = true) {
     const box = document.getElementById("chat-messages");
-    const p   = document.createElement("p");
+
+    // Time format
+    const now  = new Date();
+    const time = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+    // System message alag style
+    if (sender === 'system') {
+        const p = document.createElement('p');
+        p.className   = 'system';
+        p.textContent = text;
+        box.appendChild(p);
+        box.scrollTop = box.scrollHeight;
+        return;
+    }
+
+    // Wrapper div
+    const wrap = document.createElement('div');
+    wrap.className = `msg-wrap ${sender === 'user' ? 'user-wrap' : 'bot-wrap'}`;
+
+    // Message bubble
+    const p = document.createElement('p');
     p.className   = sender;
     p.textContent = text;
+
+    // Meta row — time + ticks
+    const meta = document.createElement('div');
+    meta.className = 'msg-meta';
+
+    const timeSpan = document.createElement('span');
+    timeSpan.className   = 'msg-time';
+    timeSpan.textContent = time;
+    meta.appendChild(timeSpan);
+
+    // Ticks — sirf user ke message pe
+    if (sender === 'user') {
+        const tick = document.createElement('span');
+        tick.className   = 'msg-tick';
+        tick.textContent = '✓✓';
+        tick.title       = 'Delivered';
+        meta.appendChild(tick);
+
+        // 2 second baad seen (green)
+        setTimeout(() => {
+            tick.classList.add('seen');
+            tick.title = 'Seen';
+        }, 2000);
+    }
+
+    wrap.appendChild(p);
+    wrap.appendChild(meta);
+
     if (animate) {
-        p.style.opacity = "0";
-        p.style.transform = "translateY(6px)";
-        p.style.transition = "opacity 0.2s ease, transform 0.2s ease";
-        box.appendChild(p);
+        wrap.style.opacity    = "0";
+        wrap.style.transform  = "translateY(6px)";
+        wrap.style.transition = "opacity 0.2s ease, transform 0.2s ease";
+        box.appendChild(wrap);
         requestAnimationFrame(() => {
-            p.style.opacity = "1";
-            p.style.transform = "translateY(0)";
+            wrap.style.opacity   = "1";
+            wrap.style.transform = "translateY(0)";
         });
     } else {
-        box.appendChild(p);
+        box.appendChild(wrap);
     }
+
     box.scrollTop = box.scrollHeight;
 }
-
 // ── AI Recommendation: parse project info after "done" state ──────────
 function maybeShowAIRec(data) {
     if (data.flow_state !== "done") return;
@@ -809,16 +884,15 @@ function triggerGreeting() {
         setInputEnabled(true);
         session_id = data.session_id;
         sessionStorage.setItem(SESSION_KEY, session_id);
-        fetch(`/chatbot/fetch/?session_id=${session_id}`)
-        .then(r => r.json())
-        .then(d => {
-            lastCount = d.messages.length;
+        fetch(`/chatbot/fetch/?session_id=${session_id}`)   // ← yeh 4 lines
+        .then(r => r.json())                                // ← delete
+        .then(d => {                                        // ← karni
+            lastCount = d.messages.length;                 // ← hain
             renderMessages(d.messages, d.admin_active, d.is_ended);
         });
     })
     .catch(() => { showTyping(false); setInputEnabled(true); });
 }
-
 // Start a completely new session (user clicked "Start fresh?")
 function startNewSession() {
     sessionStorage.removeItem(SESSION_KEY);
