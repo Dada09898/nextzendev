@@ -824,11 +824,11 @@ class InvoiceAdmin(admin.ModelAdmin):
 
     def send_invoice_email_action_btn(self, obj):
         if obj.client_email:
-            return format_html(
+            return mark_safe(
                 '<span style="display:inline-block;background:#6366f1;color:#fff;'
                 'padding:4px 12px;border-radius:4px;font-size:11px;">📧 Email</span>'
             )
-        return format_html('<span style="color:#94a3b8;font-size:11px;">No Email</span>')
+        return mark_safe('<span style="color:#94a3b8;font-size:11px;">No Email</span>')
     send_invoice_email_action_btn.short_description = 'Send'
 
     def view_invoice_link(self, obj):
@@ -848,7 +848,7 @@ class InvoiceAdmin(admin.ModelAdmin):
                 '<a href="{}" style="color:#10b981;font-weight:600;">📥 Download PDF</a>',
                 url
             )
-        return format_html('<span style="color:#94a3b8;">PDF not generated yet</span>')
+        return mark_safe('<span style="color:#94a3b8;">PDF not generated yet</span>')
     download_invoice_link.short_description = 'PDF Download Link'
 
     def get_urls(self):
