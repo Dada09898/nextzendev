@@ -24,7 +24,7 @@ from django.utils.html import format_html, mark_safe
 from django.utils import timezone
 from django.http import HttpResponseRedirect
 from django.contrib import messages as dj_messages
-
+from django.utils.html import format_html, mark_safe
 from .models import (
     # Contact
     Contact, ContactLead,
@@ -788,9 +788,12 @@ class InvoiceAdmin(admin.ModelAdmin):
 
     def total_amount_display(self, obj):
         try:
-            return format_html('<strong style="color:#10b981;">₹{:,.2f}</strong>', float(obj.total_amount))
+            return format_html(
+                '<strong style="color:#10b981;">₹{:,.2f}</strong>',
+                float(obj.total_amount)
+            )
         except (TypeError, ValueError):
-            return format_html('<strong style="color:#9ca3af;">₹0.00</strong>')
+            return mark_safe('<strong style="color:#9ca3af;">₹0.00</strong>')
     total_amount_display.short_description = '💰 Total'
     total_amount_display.admin_order_field = 'total_amount'
 
