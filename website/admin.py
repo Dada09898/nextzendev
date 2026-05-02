@@ -707,11 +707,23 @@ class PaymentOrderAdmin(admin.ModelAdmin):
     mark_refunded.short_description = '↩️ Mark as Refunded'
 
 
-# ── Invoice (PDF-based) ──────────────────────────────────────────
+# ════════════════════════════════════════════════════════════════
+# PASTE THIS IN YOUR admin.py
+#
+# 1. InvoiceAdmin — REPLACE the existing @admin.register(Invoice) block
+# 2. EmailTemplateAdmin — get_urls() mein send_email URLs bhi add karo
+#    (see bottom of this file)
+# ════════════════════════════════════════════════════════════════
+
+
+# ──────────────────────────────────────────────────────────────
+# FIX 5 + 8 + 9: InvoiceAdmin — working email button + 
+#                deleted formset items + send-email URL registered
+# ──────────────────────────────────────────────────────────────
 
 class InvoiceItemInline(admin.TabularInline):
-    model = InvoiceItem
-    extra = 1
+    model  = InvoiceItem
+    extra  = 1
     fields = ('description', 'quantity', 'unit_price', 'item_total')
     readonly_fields = ('item_total',)
 
@@ -727,19 +739,20 @@ class InvoiceAdmin(admin.ModelAdmin):
     list_display = (
         'invoice_number', 'client_name', 'status_badge',
         'total_amount_display', 'issue_date', 'due_date',
-        'view_button', 'download_button', 'send_invoice_email_action_btn'
+        'view_button', 'download_button', 'send_email_btn',  # ← FIX #5: real button
     )
-    list_filter = ('status', 'issue_date', 'due_date', 'created_at')
-    search_fields = ('invoice_number', 'client_name', 'client_company', 'client_email', 'from_name')
+    list_filter        = ('status', 'issue_date', 'due_date', 'created_at')
+    search_fields      = ('invoice_number', 'client_name', 'client_company',
+                          'client_email', 'from_name')
     list_display_links = ('invoice_number',)
-    readonly_fields = (
+    readonly_fields    = (
         'invoice_number', 'created_at', 'updated_at',
         'subtotal', 'tax_amount', 'total_amount',
-        'view_invoice_link', 'download_invoice_link'
+        'view_invoice_link', 'download_invoice_link',
     )
-    inlines = [InvoiceItemInline]
+    inlines     = [InvoiceItemInline]
     date_hierarchy = 'issue_date'
-    actions = ['generate_pdf', 'send_invoice_email_action', 'mark_paid', 'mark_overdue']
+    actions     = ['generate_pdf', 'send_invoice_email_action', 'mark_paid', 'mark_overdue']
 
     fieldsets = (
         ('📄 Invoice', {
@@ -771,12 +784,14 @@ class InvoiceAdmin(admin.ModelAdmin):
         }),
     )
 
+    # ── List display methods ──────────────────────────────────
+
     def status_badge(self, obj):
         colors = {
             'draft': '#94a3b8', 'sent': '#3b82f6', 'paid': '#10b981',
             'overdue': '#ef4444', 'cancelled': '#6b7280',
         }
-        icons = {'draft': '📝', 'sent': '📤', 'paid': '✅', 'overdue': '⚠️', 'cancelled': '❌'}
+        icons  = {'draft': '📝', 'sent': '📤', 'paid': '✅', 'overdue': '⚠️', 'cancelled': '❌'}
         return format_html(
             '<span style="background:{};color:#fff;padding:4px 12px;'
             'border-radius:99px;font-size:11px;font-weight:600;">{} {}</span>',
@@ -788,10 +803,8 @@ class InvoiceAdmin(admin.ModelAdmin):
 
     def total_amount_display(self, obj):
         try:
-            return format_html(
-                '<strong style="color:#10b981;">₹{:,.2f}</strong>',
-                float(obj.total_amount)
-            )
+            return format_html('<strong style="color:#10b981;">₹{:,.2f}</strong>',
+                               float(obj.total_amount))
         except (TypeError, ValueError):
             return mark_safe('<strong style="color:#9ca3af;">₹0.00</strong>')
     total_amount_display.short_description = '💰 Total'
@@ -822,14 +835,19 @@ class InvoiceAdmin(admin.ModelAdmin):
         )
     download_button.short_description = 'PDF'
 
-    def send_invoice_email_action_btn(self, obj):
-        if obj.client_email:
-            return mark_safe(
-                '<span style="display:inline-block;background:#6366f1;color:#fff;'
-                'padding:4px 12px;border-radius:4px;font-size:11px;">📧 Email</span>'
-            )
-        return mark_safe('<span style="color:#94a3b8;font-size:11px;">No Email</span>')
-    send_invoice_email_action_btn.short_description = 'Send'
+    def send_email_btn(self, obj):
+        """FIX #5: Real clickable button — clicks through to send-email action."""
+        if not obj.client_email:
+            return mark_safe('<span style="color:#94a3b8;font-size:11px;">No Email</span>')
+        if obj.status == 'draft':
+            return mark_safe('<span style="color:#94a3b8;font-size:11px;">Draft</span>')
+        url = reverse('admin:website_invoice_send_single_email', args=[obj.pk])
+        return format_html(
+            '<a href="{}" style="display:inline-block;background:#6366f1;'
+            'color:#fff;padding:4px 12px;border-radius:4px;text-decoration:none;font-size:11px;">📧 Send</a>',
+            url
+        )
+    send_email_btn.short_description = 'Email'
 
     def view_invoice_link(self, obj):
         if obj.invoice_number:
@@ -845,11 +863,12 @@ class InvoiceAdmin(admin.ModelAdmin):
         if obj.pdf_file:
             url = reverse('download_invoice', args=[obj.invoice_number])
             return format_html(
-                '<a href="{}" style="color:#10b981;font-weight:600;">📥 Download PDF</a>',
-                url
+                '<a href="{}" style="color:#10b981;font-weight:600;">📥 Download PDF</a>', url
             )
         return mark_safe('<span style="color:#94a3b8;">PDF not generated yet</span>')
     download_invoice_link.short_description = 'PDF Download Link'
+
+    # ── Custom URLs ───────────────────────────────────────────
 
     def get_urls(self):
         urls = super().get_urls()
@@ -857,6 +876,11 @@ class InvoiceAdmin(admin.ModelAdmin):
             path('<int:pk>/generate-pdf/',
                  self.admin_site.admin_view(self.generate_pdf_single),
                  name='website_invoice_generate_pdf_single'),
+
+            # FIX #5: Single invoice email send — per-row button
+            path('<int:pk>/send-email/',
+                 self.admin_site.admin_view(self.send_single_email_view),
+                 name='website_invoice_send_single_email'),
         ]
         return custom + urls
 
@@ -869,6 +893,34 @@ class InvoiceAdmin(admin.ModelAdmin):
         except Exception as e:
             dj_messages.error(request, f'❌ PDF generation failed: {e}')
         return HttpResponseRedirect(reverse('admin:website_invoice_change', args=[pk]))
+
+    def send_single_email_view(self, request, pk):
+        """FIX #5: Actually sends the invoice email for one invoice."""
+        from .invoice_utils import send_invoice_by_email
+        try:
+            invoice = Invoice.objects.get(pk=pk)
+            if invoice.status == 'draft':
+                dj_messages.error(request, f'❌ Cannot send a Draft invoice. Change status first.')
+            elif not invoice.client_email:
+                dj_messages.error(request, f'❌ No client email found for {invoice.invoice_number}')
+            else:
+                send_invoice_by_email(invoice)
+                # Auto-update status to 'sent' if it was in draft/new state
+                if invoice.status == 'draft':
+                    invoice.status  = 'sent'
+                    invoice.sent_at = timezone.now()
+                    invoice.save(update_fields=['status', 'sent_at'])
+                dj_messages.success(
+                    request,
+                    f'📧 Invoice {invoice.invoice_number} sent to {invoice.client_email}'
+                )
+        except Invoice.DoesNotExist:
+            dj_messages.error(request, f'❌ Invoice not found.')
+        except Exception as e:
+            dj_messages.error(request, f'❌ Email failed: {e}')
+        return HttpResponseRedirect(reverse('admin:website_invoice_changelist'))
+
+    # ── Actions ───────────────────────────────────────────────
 
     def generate_pdf(self, request, queryset):
         from .invoice_utils import generate_invoice_pdf
@@ -884,14 +936,20 @@ class InvoiceAdmin(admin.ModelAdmin):
 
     def send_invoice_email_action(self, request, queryset):
         from .invoice_utils import send_invoice_by_email
-        sent = 0
+        sent = skipped = 0
         for invoice in queryset.exclude(status='draft'):
+            if not invoice.client_email:
+                skipped += 1
+                continue
             try:
                 send_invoice_by_email(invoice)
                 sent += 1
             except Exception as e:
                 self.message_user(request, f'❌ Failed for {invoice.invoice_number}: {e}', level='error')
-        self.message_user(request, f'📧 Invoice emailed for {sent} invoice(s).')
+        if sent:
+            self.message_user(request, f'📧 Invoice emailed for {sent} invoice(s).')
+        if skipped:
+            self.message_user(request, f'⚠️ {skipped} skipped — no client email.', level='warning')
     send_invoice_email_action.short_description = '📧 Send invoice by email'
 
     def mark_paid(self, request, queryset):
@@ -909,13 +967,89 @@ class InvoiceAdmin(admin.ModelAdmin):
         obj.recalculate()
 
     def save_formset(self, request, form, formset, change):
+        """FIX #8: Also handle deleted items before recalculating."""
         instances = formset.save(commit=False)
         for instance in instances:
             instance.save()
+        # FIX: Delete removed items
+        for obj in formset.deleted_objects:
+            obj.delete()
         formset.save_m2m()
         if change and hasattr(form, 'instance'):
             form.instance.recalculate()
 
+
+# ════════════════════════════════════════════════════════════════
+# FIX #3 + #9: Register /admin/send-email/ URL in EmailTemplateAdmin
+# Add get_urls() to your EXISTING EmailTemplateAdmin class
+# ════════════════════════════════════════════════════════════════
+
+@admin.register(EmailTemplate)
+class EmailTemplateAdmin(admin.ModelAdmin):
+    list_display       = ('name', 'trigger', 'subject', 'is_active', 'created_at')
+    list_filter        = ('trigger', 'is_active')
+    search_fields      = ('name', 'subject', 'body_html')
+    list_editable      = ('is_active',)
+    list_display_links = ('name',)
+
+    fieldsets = (
+        ('📧 Template Info', {
+            'fields': ('name', 'trigger', 'is_active'),
+        }),
+        ('✉️ Content', {
+            'fields': ('subject', 'body_html'),
+            'description': (
+                'Available placeholders: {{name}}, {{email}}, {{phone}}, '
+                '{{service}}, {{budget}}, {{company}}, {{message}}, {{source}}, {{site_name}}'
+            ),
+        }),
+    )
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            # Existing template preview URL
+            path('preview/<int:pk>/',
+                 self.admin_site.admin_view(self.preview_template),
+                 name='website_emailtemplate_preview'),
+
+            # FIX #3 + #9: Send Email page — GET (show form)
+            path('send/',
+                 self.admin_site.admin_view(self._send_email_page),
+                 name='website_send_email_page'),
+
+            # FIX #3 + #9: Send Email AJAX — POST (send the email)
+            path('send/ajax/',
+                 self.admin_site.admin_view(self._send_email_ajax),
+                 name='website_send_email_ajax'),
+        ]
+        return custom + urls
+
+    def preview_template(self, request, pk):
+        from django.http import HttpResponse
+        try:
+            tmpl = EmailTemplate.objects.get(pk=pk)
+        except EmailTemplate.DoesNotExist:
+            from django.http import Http404
+            raise Http404
+        _, body = tmpl.render({
+            'name': 'Rahul Sharma', 'email': 'rahul@example.com',
+            'phone': '9999999999', 'service': 'Website Development',
+            'budget': '₹50,000', 'company': 'Acme Corp',
+            'message': 'Looking for a modern website.', 'source': 'Contact Form',
+            'site_name': 'NextZen IT Solutions',
+        })
+        return HttpResponse(body)
+
+    def _send_email_page(self, request):
+        """FIX #9: GET view — show the Send Email form."""
+        from .views import send_email_page
+        return send_email_page(request)
+
+    def _send_email_ajax(self, request):
+        """FIX #9: POST view — actually send the email."""
+        from .views import send_email_ajax
+        return send_email_ajax(request)
 # ══════════════════════════════════════════════════════════════════
 # ░░░░░░░░░░░░  📧 EMAIL SECTION  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 # ══════════════════════════════════════════════════════════════════

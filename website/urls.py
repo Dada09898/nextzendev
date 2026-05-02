@@ -8,7 +8,7 @@ urlpatterns = [
     path('portfolio', views.portfolio, name='portfolio'),
     path('about', views.about, name='about'),
     path('contact', views.contact, name='contact'),
-    path('contact/thank-you/', views.contact_thankyou, name='contact_thankyou'), 
+    path('contact/thank-you/', views.contact_thankyou, name='contact_thankyou'),
     # ── Legal pages ─────────────────────────────────────────────────────
     path('terms/', views.terms, name='terms'),
     path('privacy/', views.privacy, name='privacy'),
@@ -50,8 +50,33 @@ urlpatterns = [
     path('blog/<slug:slug>/',             views.blog_detail,      name='blog_detail'),
     path('blog/category/<slug:slug>/',    views.blog_by_category, name='blog_category'),
     path('blog/tag/<slug:slug>/',         views.blog_by_tag,      name='blog_tag'),
-    # ── Invoice ──────────────────────────────────────────────────
+    # ── Invoice ──────────────────────────────────────────────────────────
+    # NOTE: @login_required lagaya hai — public access band kiya (FIX #6, #10)
     path('invoice/<str:invoice_number>/',           views.view_invoice,         name='view_invoice'),
     path('invoice/<str:invoice_number>/download/',  views.download_invoice,     name='download_invoice'),
     path('payment-invoice/<str:invoice_number>/',   views.view_payment_invoice, name='view_payment_invoice'),
+
+    # ── Send Email (Admin tool) ───────────────────────────────────────────
+    # FIX #3: Ye dono routes pehle MISSING the — ab add kiye
+    # NOTE: send_email_page aur send_email_ajax dono @staff_member_required se protected hain
+    # Admin panel se access: /admin/website/emailtemplate/send/
+    # Ya direct: /send-email/ (yahan bhi register kiya hai staff ke liye)
+    path('send-email/',       views.send_email_page,  name='send_email_page'),
+    path('send-email/ajax/',  views.send_email_ajax,  name='send_email_ajax'),
 ]
+
+
+# ════════════════════════════════════════════════════════════════
+# IMPORTANT: send_email.html mein fetch URL bhi update karo!
+#
+# Purana (WRONG — ye route exist nahi karta):
+#   fetch('/admin/send-email/', ...)
+#
+# Naya (CORRECT — admin.py get_urls se ya direct):
+#   fetch('/admin/website/emailtemplate/send/ajax/', ...)
+#   Ya:
+#   fetch('/send-email/ajax/', ...)
+#
+# Recommended: admin ke through use karo:
+#   fetch('/admin/website/emailtemplate/send/ajax/', ...)
+# ════════════════════════════════════════════════════════════════

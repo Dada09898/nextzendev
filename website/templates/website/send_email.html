@@ -172,6 +172,9 @@
         <div id="msg-success" class="msg-success">✅ Email sent successfully!</div>
         <div id="msg-error" class="msg-error">❌ Failed to send email. Please try again.</div>
 
+        <!-- Hidden CSRF Token Field -->
+        <input type="hidden" id="csrf-token" value="{{ csrf_token }}">
+
         <!-- To -->
         <div class="form-row">
             <label>To (Email Address) *</label>
@@ -259,16 +262,30 @@
 </div>
 
 <script>
-function getCookie(name) {
-    let v = null;
-    if (document.cookie) {
-        document.cookie.split(';').forEach(c => {
-            let p = c.trim();
-            if (p.startsWith(name + '='))
-                v = decodeURIComponent(p.substring(name.length + 1));
-        });
+// ═══════════════════════════════════════════════════════════════
+// CSRF TOKEN HANDLING - FIXED VERSION
+// ═══════════════════════════════════════════════════════════════
+function getCSRFToken() {
+    // Method 1: Get from hidden input field (most reliable)
+    const tokenInput = document.getElementById('csrf-token');
+    if (tokenInput && tokenInput.value) {
+        return tokenInput.value;
     }
-    return v;
+    
+    // Method 2: Get from cookie (fallback)
+    const name = 'csrftoken';
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
 }
 
 function loadTemplate() {
@@ -309,11 +326,21 @@ function sendEmail() {
     btn.disabled    = true;
     btn.textContent = '⏳ Sending...';
 
-    fetch('/admin/send-email/', {
+    // Get CSRF token using the improved function
+    const csrfToken = getCSRFToken();
+    
+    if (!csrfToken) {
+        alert('CSRF token not found! Please refresh the page.');
+        btn.disabled = false;
+        btn.textContent = '📤 Send Email';
+        return;
+    }
+
+    fetch('/send-email/ajax/',{
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-            'X-CSRFToken': getCookie('csrftoken'),
+            'X-CSRFToken': csrfToken,
         },
         body: `to_email=${encodeURIComponent(toEmail)}`
             + `&to_name=${encodeURIComponent(toName)}`
@@ -339,7 +366,8 @@ function sendEmail() {
             document.getElementById('msg-error').textContent = '❌ ' + (data.message || 'Failed to send.');
         }
     })
-    .catch(() => {
+    .catch(err => {
+        console.error('Send email error:', err);
         btn.disabled    = false;
         btn.textContent = '📤 Send Email';
         document.getElementById('msg-error').style.display = 'block';

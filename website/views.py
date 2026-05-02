@@ -2361,14 +2361,29 @@ def blog_by_tag(request, slug):
     return redirect(f'/blog/?tag={safe_slug}')
 
 
+# ════════════════════════════════════════════════════════════════
+# PASTE THIS IN YOUR views.py — REPLACE THE ENTIRE SECTION FROM
+# "# INVOICE DOWNLOAD VIEW" to the end of the file
+# ════════════════════════════════════════════════════════════════
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404
+from django.http import FileResponse, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.admin.views.decorators import staff_member_required
+from django.conf import settings
+from .models import Invoice, PaymentOrder
+
+
 # ──────────────────────────────────────────────────────────────
-# INVOICE DOWNLOAD VIEW
+# FIX 1 + 6 + 7: download_invoice — auth check + pdf refresh
 # ──────────────────────────────────────────────────────────────
 
+@login_required                        # ← FIX #6: bina login ke access band
 def download_invoice(request, invoice_number):
     """
     Serve the invoice PDF for download.
-    Can be protected by a token or session check.
+    Only logged-in users can download.
     """
     invoice = get_object_or_404(Invoice, invoice_number=invoice_number)
 
@@ -2376,81 +2391,101 @@ def download_invoice(request, invoice_number):
     if not invoice.pdf_file:
         from .invoice_utils import generate_invoice_pdf
         generate_invoice_pdf(invoice, site_name=getattr(settings, 'SITE_NAME', ''))
+        invoice.refresh_from_db()      # ← FIX #7: naya generated pdf_file load karo
+
+    if not invoice.pdf_file:
+        from django.http import HttpResponse
+        return HttpResponse('PDF generation failed. Please try again.', status=500)
 
     response = FileResponse(
         invoice.pdf_file.open('rb'),
-        content_type     = 'application/pdf',
-        as_attachment    = True,
-        filename         = f'{invoice.invoice_number}.pdf',
+        content_type  = 'application/pdf',
+        as_attachment = True,
+        filename      = f'{invoice.invoice_number}.pdf',
     )
     return response
 
 
+# ──────────────────────────────────────────────────────────────
+# FIX 1 (DUPLICATE REMOVED): view_invoice — single definition
+# ──────────────────────────────────────────────────────────────
 
-# ══════════════════════════════════════════════════════════════════
-# INVOICE VIEW ADDITIONS
-# ══════════════════════════════════════════════════════════════════
-
-
-
+@login_required                        # ← FIX #10: public access band
 def view_invoice(request, invoice_number):
     """
     Display invoice in browser with beautiful HTML template.
     Used for: viewing invoice before download, email previews.
     """
     invoice = get_object_or_404(Invoice, invoice_number=invoice_number)
-    
-    # Calculate if invoice is overdue
-    from django.utils import timezone
-    is_overdue = False
+
+    is_overdue   = False
     days_overdue = 0
-    
+
     if invoice.status in ['sent', 'overdue'] and invoice.due_date:
         today = timezone.now().date()
         if invoice.due_date < today:
-            is_overdue = True
+            is_overdue   = True
             days_overdue = (today - invoice.due_date).days
-    
+
     return render(request, 'website/email_invoice.html', {
-        'invoice': invoice,
-        'is_overdue': is_overdue,
-        'days_overdue': days_overdue,
-        'site_name': getattr(settings, 'SITE_NAME', 'NextZenDev'),
+        'invoice'      : invoice,
+        'is_overdue'   : is_overdue,
+        'days_overdue' : days_overdue,
+        'site_name'    : getattr(settings, 'SITE_NAME', 'NextZenDev'),
         'support_email': getattr(settings, 'SUPPORT_EMAIL', invoice.from_email),
-        'site_url': getattr(settings, 'SITE_URL', 'https://nextzendev.in'),
+        'site_url'     : getattr(settings, 'SITE_URL', 'https://nextzendev.in'),
     })
 
 
+# ──────────────────────────────────────────────────────────────
+# FIX 2 (DUPLICATE REMOVED): view_payment_invoice — single definition
+# ──────────────────────────────────────────────────────────────
+
+@login_required
 def view_payment_invoice(request, invoice_number):
     """
     Display payment confirmation invoice (after successful payment).
     Shows PAID stamp and payment details.
     """
     payment = get_object_or_404(PaymentOrder, invoice_number=invoice_number)
-    
+
     return render(request, 'website/email_invoice.html', {
-        'payment': payment,
-        'site_name': getattr(settings, 'SITE_NAME', 'NextZenDev'),
+        'payment'      : payment,
+        'site_name'    : getattr(settings, 'SITE_NAME', 'NextZenDev'),
         'support_email': getattr(settings, 'SUPPORT_EMAIL', settings.DEFAULT_FROM_EMAIL),
-        'site_url': getattr(settings, 'SITE_URL', 'https://nextzendev.in'),
+        'site_url'     : getattr(settings, 'SITE_URL', 'https://nextzendev.in'),
     })
 
 
-@staff_member_required
+# ──────────────────────────────────────────────────────────────
+# FIX 4: send_email_page — decorator order correct karo
+# ──────────────────────────────────────────────────────────────
+
+@staff_member_required                 # ← Auth pehle check ho
 def send_email_page(request):
     from .models import EmailTemplate, EmailLog
     templates   = EmailTemplate.objects.filter(is_active=True).order_by('name')
     recent_logs = EmailLog.objects.select_related('template').order_by('-sent_at')[:20]
     return render(request, 'website/send_email.html', {
-        'templates':   templates,
+        'templates'  : templates,
         'recent_logs': recent_logs,
-        'title':       'Send Email',
+        'title'      : 'Send Email',
     })
 
 
-@staff_member_required
-@csrf_exempt
+# ──────────────────────────────────────────────────────────────
+# FIX 3 + 4: send_email_ajax — correct decorator order
+# csrf_exempt ke saath staff_member_required — sahi order:
+# staff_member_required pehle, csrf handled internally via token
+# ──────────────────────────────────────────────────────────────
+
+@staff_member_required                 # ← FIX #4: order correct — auth pehle
 def send_email_ajax(request):
+    """
+    AJAX endpoint for admin Send Email page.
+    Registered at: /admin/send-email/  (via admin.py get_urls)
+    CSRF token frontend se X-CSRFToken header mein aa raha hai — exempt nahi karo.
+    """
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'POST required'}, status=405)
 
@@ -2472,8 +2507,8 @@ def send_email_ajax(request):
         return JsonResponse({'status': 'error', 'message': 'Template not found'})
 
     context = {
-        'name':      to_name,
-        'email':     to_email,
+        'name'     : to_name,
+        'email'    : to_email,
         'site_name': getattr(settings, 'SITE_NAME', 'NextZen IT Solutions'),
         'phone': '', 'service': '', 'budget': '', 'company': '', 'message': '',
     }
@@ -2482,7 +2517,8 @@ def send_email_ajax(request):
         subject = custom_subject
 
     try:
-        mail = EmailMessage(
+        from django.core.mail import EmailMessage as _EM
+        mail = _EM(
             subject    = subject,
             body       = body,
             from_email = settings.DEFAULT_FROM_EMAIL,
