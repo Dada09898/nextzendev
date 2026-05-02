@@ -1,0 +1,351 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content_title %}<h2>📧 Send Email</h2>{% endblock %}
+
+{% block content %}
+<style>
+* { box-sizing: border-box; }
+.email-wrap {
+    max-width: 760px;
+    margin: 20px 0;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.email-header {
+    background: #417690;
+    color: #fff;
+    padding: 18px 28px;
+    font-size: 16px;
+    font-weight: bold;
+}
+.email-body { padding: 28px; }
+
+.form-row {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+}
+.form-row label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 6px;
+}
+.form-row input,
+.form-row select,
+.form-row textarea {
+    padding: 10px 14px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    transition: border 0.2s;
+    width: 100%;
+}
+.form-row input:focus,
+.form-row select:focus,
+.form-row textarea:focus { border-color: #417690; }
+.form-row textarea { min-height: 180px; resize: vertical; font-family: monospace; }
+
+.template-preview {
+    background: #f8faff;
+    border: 1px solid #e0e7ff;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+    display: none;
+}
+.template-preview h4 {
+    font-size: 12px;
+    color: #417690;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+.preview-subject {
+    font-size: 14px;
+    font-weight: 700;
+    color: #222;
+    margin-bottom: 6px;
+}
+.preview-iframe {
+    width: 100%;
+    height: 300px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+.placeholders-help {
+    background: #fffbeb;
+    border: 1px solid #fcd34d;
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 12px;
+    color: #78350f;
+    margin-bottom: 20px;
+}
+.placeholders-help strong { color: #92400e; }
+.placeholder-tag {
+    display: inline-block;
+    background: #fef3c7;
+    border: 1px solid #fcd34d;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: monospace;
+    font-size: 11px;
+    margin: 2px;
+}
+
+.btn-row { display: flex; gap: 12px; align-items: center; }
+.btn-send {
+    background: #417690;
+    color: #fff;
+    border: none;
+    padding: 12px 32px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.btn-send:hover { background: #2e5269; }
+.btn-send:disabled { background: #aaa; cursor: not-allowed; }
+.btn-preview {
+    background: #fff;
+    color: #417690;
+    border: 2px solid #417690;
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.msg-success {
+    background: #ecfdf5;
+    border: 1px solid #6ee7b7;
+    color: #065f46;
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    display: none;
+}
+.msg-error {
+    background: #fef2f2;
+    border: 1px solid #fca5a5;
+    color: #991b1b;
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    display: none;
+}
+
+.sent-log {
+    margin-top: 28px;
+    border-top: 2px solid #f0f0f0;
+    padding-top: 20px;
+}
+.sent-log h3 { font-size: 14px; color: #555; margin-bottom: 12px; }
+.log-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid #f5f5f5;
+    font-size: 13px;
+}
+.log-item .li-email { color: #222; font-weight: 600; }
+.log-item .li-subject { color: #666; }
+.log-item .li-time { color: #aaa; font-size: 11px; }
+.badge-sent { background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }
+.badge-failed { background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }
+</style>
+
+<div class="email-wrap">
+    <div class="email-header">📧 Compose & Send Email</div>
+    <div class="email-body">
+
+        <div id="msg-success" class="msg-success">✅ Email sent successfully!</div>
+        <div id="msg-error" class="msg-error">❌ Failed to send email. Please try again.</div>
+
+        <!-- To -->
+        <div class="form-row">
+            <label>To (Email Address) *</label>
+            <input type="email" id="to-email" placeholder="client@example.com" required>
+        </div>
+
+        <!-- Recipient Name -->
+        <div class="form-row">
+            <label>Recipient Name</label>
+            <input type="text" id="to-name" placeholder="e.g. Rahul Sharma">
+        </div>
+
+        <!-- Template Choose -->
+        <div class="form-row">
+            <label>Choose Template *</label>
+            <select id="template-select" onchange="loadTemplate()">
+                <option value="">-- Select a Template --</option>
+                {% for t in templates %}
+                <option value="{{ t.pk }}"
+                        data-subject="{{ t.subject }}"
+                        data-body="{{ t.body_html|escapejs }}">
+                    {{ t.name }} — {{ t.get_trigger_display }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Template Preview -->
+        <div class="template-preview" id="template-preview">
+            <h4>📋 Template Preview</h4>
+            <div class="preview-subject" id="preview-subject"></div>
+            <iframe class="preview-iframe" id="preview-iframe"></iframe>
+        </div>
+
+        <!-- Placeholders Help -->
+        <div class="placeholders-help">
+            <strong>Available Placeholders:</strong><br>
+            <span class="placeholder-tag">{{name}}</span>
+            <span class="placeholder-tag">{{email}}</span>
+            <span class="placeholder-tag">{{phone}}</span>
+            <span class="placeholder-tag">{{service}}</span>
+            <span class="placeholder-tag">{{budget}}</span>
+            <span class="placeholder-tag">{{company}}</span>
+            <span class="placeholder-tag">{{message}}</span>
+            <span class="placeholder-tag">{{site_name}}</span>
+            <br><small style="margin-top:6px;display:block;">Recipient Name field se <strong>{{name}}</strong> automatically replace hoga.</small>
+        </div>
+
+        <!-- Subject Override -->
+        <div class="form-row">
+            <label>Subject (optional — template subject override karo)</label>
+            <input type="text" id="custom-subject" placeholder="Leave empty to use template subject">
+        </div>
+
+        <!-- Buttons -->
+        <div class="btn-row">
+            <button class="btn-send" id="send-btn" onclick="sendEmail()">📤 Send Email</button>
+            <button class="btn-preview" onclick="previewEmail()">👁️ Preview</button>
+        </div>
+
+    </div>
+</div>
+
+<!-- Recent Sent Emails -->
+<div class="sent-log">
+    <h3>📋 Recently Sent Emails</h3>
+    {% for log in recent_logs %}
+    <div class="log-item">
+        <div>
+            <span class="li-email">{{ log.recipient }}</span>
+            <span class="li-subject"> — {{ log.subject|truncatechars:50 }}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+            <span class="li-time">{{ log.sent_at|date:"d M Y, h:i A" }}</span>
+            {% if log.status == 'sent' %}
+                <span class="badge-sent">✅ Sent</span>
+            {% else %}
+                <span class="badge-failed">❌ Failed</span>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <p style="color:#aaa;font-size:13px;padding:12px 0;">No emails sent yet.</p>
+    {% endfor %}
+</div>
+
+<script>
+function getCookie(name) {
+    let v = null;
+    if (document.cookie) {
+        document.cookie.split(';').forEach(c => {
+            let p = c.trim();
+            if (p.startsWith(name + '='))
+                v = decodeURIComponent(p.substring(name.length + 1));
+        });
+    }
+    return v;
+}
+
+function loadTemplate() {
+    const sel = document.getElementById('template-select');
+    const opt = sel.options[sel.selectedIndex];
+    if (!opt.value) {
+        document.getElementById('template-preview').style.display = 'none';
+        return;
+    }
+    const subject = opt.getAttribute('data-subject');
+    const body    = opt.getAttribute('data-body');
+
+    document.getElementById('preview-subject').textContent = '📌 ' + subject;
+    const iframe = document.getElementById('preview-iframe');
+    iframe.srcdoc = body;
+    document.getElementById('template-preview').style.display = 'block';
+}
+
+function previewEmail() {
+    const sel  = document.getElementById('template-select');
+    const opt  = sel.options[sel.selectedIndex];
+    if (!opt.value) { alert('Pehle template select karo.'); return; }
+    const pk   = opt.value;
+    window.open(`/admin/website/emailtemplate/${pk}/preview/`, '_blank');
+}
+
+function sendEmail() {
+    const toEmail  = document.getElementById('to-email').value.trim();
+    const toName   = document.getElementById('to-name').value.trim();
+    const sel      = document.getElementById('template-select');
+    const tmplPk   = sel.value;
+    const subject  = document.getElementById('custom-subject').value.trim();
+
+    if (!toEmail) { alert('Email address required!'); return; }
+    if (!tmplPk)  { alert('Template select karo!'); return; }
+
+    const btn = document.getElementById('send-btn');
+    btn.disabled    = true;
+    btn.textContent = '⏳ Sending...';
+
+    fetch('/admin/send-email/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: `to_email=${encodeURIComponent(toEmail)}`
+            + `&to_name=${encodeURIComponent(toName)}`
+            + `&template_pk=${encodeURIComponent(tmplPk)}`
+            + `&custom_subject=${encodeURIComponent(subject)}`
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.disabled    = false;
+        btn.textContent = '📤 Send Email';
+        if (data.status === 'ok') {
+            document.getElementById('msg-success').style.display = 'block';
+            document.getElementById('msg-error').style.display   = 'none';
+            document.getElementById('to-email').value   = '';
+            document.getElementById('to-name').value    = '';
+            document.getElementById('custom-subject').value = '';
+            document.getElementById('template-select').value = '';
+            document.getElementById('template-preview').style.display = 'none';
+            setTimeout(() => { location.reload(); }, 1500);
+        } else {
+            document.getElementById('msg-error').style.display   = 'block';
+            document.getElementById('msg-success').style.display = 'none';
+            document.getElementById('msg-error').textContent = '❌ ' + (data.message || 'Failed to send.');
+        }
+    })
+    .catch(() => {
+        btn.disabled    = false;
+        btn.textContent = '📤 Send Email';
+        document.getElementById('msg-error').style.display = 'block';
+        document.getElementById('msg-error').textContent   = '❌ Network error. Please try again.';
+    });
+}
+</script>
+
+{% endblock %}

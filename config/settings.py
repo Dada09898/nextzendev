@@ -59,6 +59,7 @@ JAZZMIN_SETTINGS = {
         {"name": "💬 Chat",        "url": "/admin/website/chatsession/"},
         {"name": "📅 Appointments","url": "/admin/website/appointment/"},
         {"name": "💳 Invoices",    "url": "/admin/website/invoice/"},
+        {"name": "📧 Send Email",  "url": "/admin/send-email/"}, 
     ],
 
     "usermenu_links": [

@@ -2434,3 +2434,80 @@ def view_payment_invoice(request, invoice_number):
         'support_email': getattr(settings, 'SUPPORT_EMAIL', settings.DEFAULT_FROM_EMAIL),
         'site_url': getattr(settings, 'SITE_URL', 'https://nextzendev.in'),
     })
+
+
+@staff_member_required
+def send_email_page(request):
+    from .models import EmailTemplate, EmailLog
+    templates   = EmailTemplate.objects.filter(is_active=True).order_by('name')
+    recent_logs = EmailLog.objects.select_related('template').order_by('-sent_at')[:20]
+    return render(request, 'website/send_email.html', {
+        'templates':   templates,
+        'recent_logs': recent_logs,
+        'title':       'Send Email',
+    })
+
+
+@staff_member_required
+@csrf_exempt
+def send_email_ajax(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'POST required'}, status=405)
+
+    from .models import EmailTemplate, EmailLog
+
+    to_email       = request.POST.get('to_email', '').strip()
+    to_name        = request.POST.get('to_name', '').strip() or 'Valued Customer'
+    template_pk    = request.POST.get('template_pk', '').strip()
+    custom_subject = request.POST.get('custom_subject', '').strip()
+
+    if not to_email:
+        return JsonResponse({'status': 'error', 'message': 'Email address required'})
+    if not template_pk:
+        return JsonResponse({'status': 'error', 'message': 'Template required'})
+
+    try:
+        tmpl = EmailTemplate.objects.get(pk=template_pk, is_active=True)
+    except EmailTemplate.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Template not found'})
+
+    context = {
+        'name':      to_name,
+        'email':     to_email,
+        'site_name': getattr(settings, 'SITE_NAME', 'NextZen IT Solutions'),
+        'phone': '', 'service': '', 'budget': '', 'company': '', 'message': '',
+    }
+    subject, body = tmpl.render(context)
+    if custom_subject:
+        subject = custom_subject
+
+    try:
+        mail = EmailMessage(
+            subject    = subject,
+            body       = body,
+            from_email = settings.DEFAULT_FROM_EMAIL,
+            to         = [to_email],
+        )
+        mail.content_subtype = 'html'
+        mail.send(fail_silently=False)
+
+        EmailLog.objects.create(
+            recipient = to_email,
+            subject   = subject,
+            body_html = body,
+            status    = 'sent',
+            template  = tmpl,
+        )
+        return JsonResponse({'status': 'ok'})
+
+    except Exception as e:
+        EmailLog.objects.create(
+            recipient = to_email,
+            subject   = subject,
+            body_html = body,
+            status    = 'failed',
+            error     = str(e),
+            template  = tmpl,
+        )
+        logger.error(f"[SendEmail] Failed to {to_email}: {e}")
+        return JsonResponse({'status': 'error', 'message': str(e)})
