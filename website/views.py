@@ -2473,77 +2473,105 @@ def send_email_page(request):
     })
 
 
-# ──────────────────────────────────────────────────────────────
-# FIX 3 + 4: send_email_ajax — correct decorator order
-# csrf_exempt ke saath staff_member_required — sahi order:
-# staff_member_required pehle, csrf handled internally via token
-# ──────────────────────────────────────────────────────────────
 
-@staff_member_required                 # ← FIX #4: order correct — auth pehle
+
+# ══════════════════════════════════════════════════════════════════
+# 📧 UPDATED send_email_ajax FUNCTION FOR EMAIL BUILDER
+# ══════════════════════════════════════════════════════════════════
+# Replace your current send_email_ajax function (around line 2483) with this:
+
+@staff_member_required
 def send_email_ajax(request):
     """
-    AJAX endpoint for admin Send Email page.
-    Registered at: /admin/send-email/  (via admin.py get_urls)
-    CSRF token frontend se X-CSRFToken header mein aa raha hai — exempt nahi karo.
+    AJAX endpoint for Email Builder.
+    Now supports BOTH:
+    1. Template-based emails (old system)
+    2. Direct HTML emails (new email builder)
     """
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'POST required'}, status=405)
 
-    from .models import EmailTemplate, EmailLog
+    from .models import EmailLog
 
-    to_email       = request.POST.get('to_email', '').strip()
-    to_name        = request.POST.get('to_name', '').strip() or 'Valued Customer'
-    template_pk    = request.POST.get('template_pk', '').strip()
-    custom_subject = request.POST.get('custom_subject', '').strip()
+    to_email   = request.POST.get('to_email', '').strip()
+    to_name    = request.POST.get('to_name', '').strip() or 'Valued Customer'
+    subject    = request.POST.get('subject', '').strip()
+    html_body  = request.POST.get('html_body', '').strip()
+    layout     = request.POST.get('layout', 'welcome').strip()
+    
+    # Old system support (template_pk)
+    template_pk = request.POST.get('template_pk', '').strip()
 
+    # Validation
     if not to_email:
         return JsonResponse({'status': 'error', 'message': 'Email address required'})
-    if not template_pk:
-        return JsonResponse({'status': 'error', 'message': 'Template required'})
 
-    try:
-        tmpl = EmailTemplate.objects.get(pk=template_pk, is_active=True)
-    except EmailTemplate.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Template not found'})
+    # NEW SYSTEM: Direct HTML body provided
+    if html_body:
+        if not subject:
+            return JsonResponse({'status': 'error', 'message': 'Subject required'})
+        
+        final_subject = subject
+        final_body = html_body
+        template_ref = None
 
-    context = {
-        'name'     : to_name,
-        'email'    : to_email,
-        'site_name': getattr(settings, 'SITE_NAME', 'NextZen IT Solutions'),
-        'phone': '', 'service': '', 'budget': '', 'company': '', 'message': '',
-    }
-    subject, body = tmpl.render(context)
-    if custom_subject:
-        subject = custom_subject
+    # OLD SYSTEM: Template-based
+    elif template_pk:
+        from .models import EmailTemplate
+        try:
+            tmpl = EmailTemplate.objects.get(pk=template_pk, is_active=True)
+        except EmailTemplate.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Template not found'})
 
+        context = {
+            'name': to_name,
+            'email': to_email,
+            'site_name': getattr(settings, 'SITE_NAME', 'NextZen IT Solutions'),
+            'phone': '', 'service': '', 'budget': '', 'company': '', 'message': '',
+        }
+        final_subject, final_body = tmpl.render(context)
+        
+        # Custom subject override
+        custom_subject = request.POST.get('custom_subject', '').strip()
+        if custom_subject:
+            final_subject = custom_subject
+        
+        template_ref = tmpl
+    
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Either html_body or template_pk required'})
+
+    # Send email
     try:
         from django.core.mail import EmailMessage as _EM
         mail = _EM(
-            subject    = subject,
-            body       = body,
+            subject    = final_subject,
+            body       = final_body,
             from_email = settings.DEFAULT_FROM_EMAIL,
             to         = [to_email],
         )
         mail.content_subtype = 'html'
         mail.send(fail_silently=False)
 
+        # Log success
         EmailLog.objects.create(
             recipient = to_email,
-            subject   = subject,
-            body_html = body,
+            subject   = final_subject,
+            body_html = final_body,
             status    = 'sent',
-            template  = tmpl,
+            template  = template_ref,
         )
         return JsonResponse({'status': 'ok'})
 
     except Exception as e:
+        # Log failure
         EmailLog.objects.create(
             recipient = to_email,
-            subject   = subject,
-            body_html = body,
+            subject   = final_subject,
+            body_html = final_body,
             status    = 'failed',
             error     = str(e),
-            template  = tmpl,
+            template  = template_ref,
         )
         logger.error(f"[SendEmail] Failed to {to_email}: {e}")
         return JsonResponse({'status': 'error', 'message': str(e)})

@@ -336,7 +336,7 @@ function sendEmail() {
         return;
     }
 
-    fetch('/admin/website/emailtemplate/send/ajax/',{
+    fetch('/admin/send-email/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',

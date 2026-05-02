@@ -984,72 +984,72 @@ class InvoiceAdmin(admin.ModelAdmin):
 # Add get_urls() to your EXISTING EmailTemplateAdmin class
 # ════════════════════════════════════════════════════════════════
 
-@admin.register(EmailTemplate)
-class EmailTemplateAdmin(admin.ModelAdmin):
-    list_display       = ('name', 'trigger', 'subject', 'is_active', 'created_at')
-    list_filter        = ('trigger', 'is_active')
-    search_fields      = ('name', 'subject', 'body_html')
-    list_editable      = ('is_active',)
-    list_display_links = ('name',)
+# @admin.register(EmailTemplate)
+# class EmailTemplateAdmin(admin.ModelAdmin):
+#     list_display       = ('name', 'trigger', 'subject', 'is_active', 'created_at')
+#     list_filter        = ('trigger', 'is_active')
+#     search_fields      = ('name', 'subject', 'body_html')
+#     list_editable      = ('is_active',)
+#     list_display_links = ('name',)
 
-    fieldsets = (
-        ('📧 Template Info', {
-            'fields': ('name', 'trigger', 'is_active'),
-        }),
-        ('✉️ Content', {
-            'fields': ('subject', 'body_html'),
-            'description': (
-                'Available placeholders: {{name}}, {{email}}, {{phone}}, '
-                '{{service}}, {{budget}}, {{company}}, {{message}}, {{source}}, {{site_name}}'
-            ),
-        }),
-    )
+#     fieldsets = (
+#         ('📧 Template Info', {
+#             'fields': ('name', 'trigger', 'is_active'),
+#         }),
+#         ('✉️ Content', {
+#             'fields': ('subject', 'body_html'),
+#             'description': (
+#                 'Available placeholders: {{name}}, {{email}}, {{phone}}, '
+#                 '{{service}}, {{budget}}, {{company}}, {{message}}, {{source}}, {{site_name}}'
+#             ),
+#         }),
+#     )
 
-    def get_urls(self):
-        urls = super().get_urls()
-        custom = [
-            # Existing template preview URL
-            path('preview/<int:pk>/',
-                 self.admin_site.admin_view(self.preview_template),
-                 name='website_emailtemplate_preview'),
+#     def get_urls(self):
+#         urls = super().get_urls()
+#         custom = [
+#             # Existing template preview URL
+#             path('preview/<int:pk>/',
+#                  self.admin_site.admin_view(self.preview_template),
+#                  name='website_emailtemplate_preview'),
 
-            # FIX #3 + #9: Send Email page — GET (show form)
-            path('send/',
-                 self.admin_site.admin_view(self._send_email_page),
-                 name='website_send_email_page'),
+#             # FIX #3 + #9: Send Email page — GET (show form)
+#             path('send/',
+#                  self.admin_site.admin_view(self._send_email_page),
+#                  name='website_send_email_page'),
 
-            # FIX #3 + #9: Send Email AJAX — POST (send the email)
-            path('send/ajax/',
-                 self.admin_site.admin_view(self._send_email_ajax),
-                 name='website_send_email_ajax'),
-        ]
-        return custom + urls
+#             # FIX #3 + #9: Send Email AJAX — POST (send the email)
+#             path('send/ajax/',
+#                  self.admin_site.admin_view(self._send_email_ajax),
+#                  name='website_send_email_ajax'),
+#         ]
+#         return custom + urls
 
-    def preview_template(self, request, pk):
-        from django.http import HttpResponse
-        try:
-            tmpl = EmailTemplate.objects.get(pk=pk)
-        except EmailTemplate.DoesNotExist:
-            from django.http import Http404
-            raise Http404
-        _, body = tmpl.render({
-            'name': 'Rahul Sharma', 'email': 'rahul@example.com',
-            'phone': '9999999999', 'service': 'Website Development',
-            'budget': '₹50,000', 'company': 'Acme Corp',
-            'message': 'Looking for a modern website.', 'source': 'Contact Form',
-            'site_name': 'NextZen IT Solutions',
-        })
-        return HttpResponse(body)
+#     def preview_template(self, request, pk):
+#         from django.http import HttpResponse
+#         try:
+#             tmpl = EmailTemplate.objects.get(pk=pk)
+#         except EmailTemplate.DoesNotExist:
+#             from django.http import Http404
+#             raise Http404
+#         _, body = tmpl.render({
+#             'name': 'Rahul Sharma', 'email': 'rahul@example.com',
+#             'phone': '9999999999', 'service': 'Website Development',
+#             'budget': '₹50,000', 'company': 'Acme Corp',
+#             'message': 'Looking for a modern website.', 'source': 'Contact Form',
+#             'site_name': 'NextZen IT Solutions',
+#         })
+#         return HttpResponse(body)
 
-    def _send_email_page(self, request):
-        """FIX #9: GET view — show the Send Email form."""
-        from .views import send_email_page
-        return send_email_page(request)
+#     def _send_email_page(self, request):
+#         """FIX #9: GET view — show the Send Email form."""
+#         from .views import send_email_page
+#         return send_email_page(request)
 
-    def _send_email_ajax(self, request):
-        """FIX #9: POST view — actually send the email."""
-        from .views import send_email_ajax
-        return send_email_ajax(request)
+#     def _send_email_ajax(self, request):
+#         """FIX #9: POST view — actually send the email."""
+#         from .views import send_email_ajax
+#         return send_email_ajax(request)
 # ══════════════════════════════════════════════════════════════════
 # ░░░░░░░░░░░░  📧 EMAIL SECTION  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 # ══════════════════════════════════════════════════════════════════
