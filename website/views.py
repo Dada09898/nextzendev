@@ -13,7 +13,7 @@ import razorpay
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
-from .models import Lead, LeadNote, PaymentOrder  # Assuming these models are defined for CRM and payments
+from .models import Lead, LeadNote, PaymentOrder, Invoice  # Assuming these models are defined for CRM and payments
 from .models import NewsletterSubscriber
 import logging
 logger = logging.getLogger(__name__)
@@ -2390,12 +2390,7 @@ def download_invoice(request, invoice_number):
 # ══════════════════════════════════════════════════════════════════
 # INVOICE VIEW ADDITIONS
 # ══════════════════════════════════════════════════════════════════
-# Ye code apne views.py ke end mein add karo (download_invoice function ke baad)
 
-from django.shortcuts import render, get_object_or_404
-from django.http import FileResponse
-from .models import Invoice, PaymentOrder
-from django.conf import settings
 
 
 def view_invoice(request, invoice_number):
